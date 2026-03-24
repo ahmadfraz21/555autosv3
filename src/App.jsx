@@ -32,18 +32,18 @@ const CATS = [
   { id: "دیگر", n: "دیگر", i: "📦" },
 ];
 const DEMO_PRODUCTS = [
-  { id: "p1", name: "ایئر فلٹر ہینو", category: "انجن", tags: ["ہینو", "فلٹر"], status: "in-stock" },
-  { id: "p2", name: "بریک پیڈ مزدا", category: "بریک", tags: ["مزدا", "بریک"], status: "in-stock" },
-  { id: "p3", name: "آئل فلٹر نسان", category: "انجن", tags: ["نسان", "فلٹر"], status: "in-stock" },
-  { id: "p4", name: "شاک ابزربر بیڈفورڈ", category: "سسپنشن", tags: ["بیڈفورڈ"], status: "sold" },
-  { id: "p5", name: "ہیڈ لائٹ بلب", category: "برقی", tags: ["بلب"], status: "in-stock" },
-  { id: "p6", name: "ریڈی ایٹر ہوز", category: "انجن", tags: ["ہوز"], status: "in-stock" },
-  { id: "p7", name: "کلچ پلیٹ ہینو", category: "انجن", tags: ["ہینو", "کلچ"], status: "in-stock" },
-  { id: "p8", name: "الٹرنیٹر بیلٹ", category: "برقی", tags: ["بیلٹ"], status: "in-stock" },
-  { id: "p9", name: "ڈور ہینڈل مزدا", category: "باڈی پارٹس", tags: ["مزدا"], status: "in-stock" },
-  { id: "p10", name: "فیول پمپ نسان", category: "انجن", tags: ["نسان", "پمپ"], status: "sold" },
-  { id: "p11", name: "وائپر بلیڈ", category: "باڈی پارٹس", tags: ["وائپر"], status: "in-stock" },
-  { id: "p12", name: "بریک ڈرم", category: "بریک", tags: ["ڈرم", "بریک"], status: "in-stock" },
+  { id: "p1", name: "ایئر فلٹر ہینو", category: "انجن", tags: ["ہینو", "فلٹر"], status: "in-stock", price: 1500 },
+  { id: "p2", name: "بریک پیڈ مزدا", category: "بریک", tags: ["مزدا", "بریک"], status: "in-stock", price: 2200 },
+  { id: "p3", name: "آئل فلٹر نسان", category: "انجن", tags: ["نسان", "فلٹر"], status: "in-stock", price: 1800 },
+  { id: "p4", name: "شاک ابزربر بیڈفورڈ", category: "سسپنشن", tags: ["بیڈفورڈ"], status: "sold", price: 5500 },
+  { id: "p5", name: "ہیڈ لائٹ بلب", category: "برقی", tags: ["بلب"], status: "in-stock", price: 800 },
+  { id: "p6", name: "ریڈی ایٹر ہوز", category: "انجن", tags: ["ہوز"], status: "in-stock", price: 1200 },
+  { id: "p7", name: "کلچ پلیٹ ہینو", category: "انجن", tags: ["ہینو", "کلچ"], status: "in-stock", price: 8500 },
+  { id: "p8", name: "الٹرنیٹر بیلٹ", category: "برقی", tags: ["بیلٹ"], status: "in-stock", price: 950 },
+  { id: "p9", name: "ڈور ہینڈل مزدا", category: "باڈی پارٹس", tags: ["مزدا"], status: "in-stock", price: 1100 },
+  { id: "p10", name: "فیول پمپ نسان", category: "انجن", tags: ["نسان", "پمپ"], status: "sold", price: 4200 },
+  { id: "p11", name: "وائپر بلیڈ", category: "باڈی پارٹس", tags: ["وائپر"], status: "in-stock", price: 600 },
+  { id: "p12", name: "بریک ڈرم", category: "بریک", tags: ["ڈرم", "بریک"], status: "in-stock", price: 3800 },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -255,6 +255,16 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 .fci{display:flex;gap:10px;align-items:center;margin-bottom:9px;font-family:var(--font);font-size:.85rem;color:rgba(255,255,255,.6)}
 .fbot{max-width:1300px;margin:0 auto;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);text-align:center;font-family:var(--font);font-size:.85rem;color:rgba(255,255,255,.4)}
 .ltr{direction:ltr;unicode-bidi:embed;display:inline-block}
+.pprice{font-family:'Arial Black',sans-serif;font-size:1.1rem;color:var(--red);font-weight:900;direction:ltr;display:inline-block;margin-bottom:10px}
+.pprice-na{font-family:var(--font);font-size:.85rem;color:#bbb;margin-bottom:10px}
+.cart-subtotal{background:rgba(204,0,0,.05);border:1px solid rgba(204,0,0,.1);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.cart-subtotal-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cart-subtotal-row:last-child{margin-bottom:0;padding-top:8px;border-top:1px dashed rgba(204,0,0,.15);font-weight:700}
+.cart-subtotal-lbl{font-family:var(--font);font-size:.85rem;color:#888}
+.cart-subtotal-val{font-family:'Arial Black',sans-serif;font-size:.9rem;color:var(--blk);direction:ltr}
+.cart-subtotal-total{font-family:'Arial Black',sans-serif;font-size:1.1rem;color:var(--red);direction:ltr}
+.ciprice{font-family:'Arial Black',sans-serif;font-size:.8rem;color:var(--red);direction:ltr;display:block;margin-top:2px}
+
 .srchbar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.85);border:1.5px solid rgba(204,0,0,.18);border-radius:14px;padding:10px 18px;margin-bottom:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);transition:border-color .3s}
 .srchbar:focus-within{border-color:var(--red);box-shadow:0 0 0 3px rgba(204,0,0,.1)}
 .srchbar input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:1rem;direction:rtl;outline:none;color:var(--blk)}
@@ -367,7 +377,7 @@ function Navbar({ isOwner, cartCount, onCart, onLogin, onLogout, onCat, onDash }
         {isOwner && <li><a href="#" onClick={(e) => { e.preventDefault(); onDash(); setMenuOpen(false); }} style={{ background: "rgba(204,0,0,.08)", color: "var(--red)", borderRadius: "8px", padding: "8px 14px" }}>👑 ڈیش بورڈ</a></li>}
         {isOwner && <li><span className="obadge">👑 میاں صاحب موڈ</span></li>}
         <li>
-          <button className="cbtn" onClick={onCart}>
+          <button className="cbtn" onClick={onCart} title="کارٹ کھولیں">
             🛒 کارٹ {cartCount > 0 && <span className="cbadge">{cartCount}</span>}
           </button>
         </li>
@@ -543,6 +553,7 @@ function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) 
                 <span className={`pbadge ${isSold ? "bsold" : "bin"}`}>{isSold ? "❌ فروخت شدہ" : "✅ دستیاب"}</span>
                 <div className="pname">{p.name}</div>
                 <span className="ptag0">{p.category}</span>
+                {p.price ? <div className="pprice">Rs. {p.price.toLocaleString()}</div> : <div className="pprice-na">قیمت دریافت کریں</div>}
                 {p.tags?.length > 0 && <div className="ptags">{p.tags.map((t, ti) => <span key={ti} className="ptag">{t}</span>)}</div>}
                 <div className="prow">
                   <label className="chkw" onClick={() => onToggleSelect(p.id)}>
@@ -649,7 +660,7 @@ function CartPanel({ open, cart, onClose, onQty, onDelete, onWA, onClear }) {
             ? <div className="cempty"><div style={{ fontSize: "3rem" }}>🛒</div><div>کارٹ خالی ہے</div></div>
             : cart.map(it => (
               <div key={it.id} className="citem">
-                <div className="cinf"><div className="cinm">{it.name}</div><div className="cicat">{it.category}</div></div>
+                <div className="cinf"><div className="cinm">{it.name}</div><div className="cicat">{it.category}</div>{it.price && <span className="ciprice">Rs. {(it.price * it.qty).toLocaleString()}</span>}</div>
                 <div className="ciqty">
                   <button className="qbtn" onClick={() => onQty(it.id, -1)}>−</button>
                   <span className="qnum">{it.qty}</span>
@@ -661,12 +672,30 @@ function CartPanel({ open, cart, onClose, onQty, onDelete, onWA, onClear }) {
           }
         </div>
         <div className="cfoot">
-          {cart.length > 0 && (
-            <>
-              <div className="csum">مجموعی: {total} اشیاء ({cart.length} قسم)</div>
-              <button className="cart-clear" onClick={onClear}>🗑️ کارٹ خالی کریں</button>
-            </>
-          )}
+          {cart.length > 0 && (() => {
+            const subtotal = cart.reduce((a, c) => a + (c.price || 0) * c.qty, 0);
+            const hasPrices = cart.some(c => c.price);
+            return (
+              <>
+                {hasPrices && (
+                  <div className="cart-subtotal">
+                    {cart.map(it => it.price ? (
+                      <div key={it.id} className="cart-subtotal-row">
+                        <span className="cart-subtotal-lbl">{it.name} × {it.qty}</span>
+                        <span className="cart-subtotal-val">Rs. {(it.price * it.qty).toLocaleString()}</span>
+                      </div>
+                    ) : null)}
+                    <div className="cart-subtotal-row">
+                      <span className="cart-subtotal-lbl">کل رقم</span>
+                      <span className="cart-subtotal-total">Rs. {subtotal.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+                <div className="csum">{total} اشیاء — {cart.length} قسم</div>
+                <button className="cart-clear" onClick={onClear}>🗑️ کارٹ خالی کریں</button>
+              </>
+            );
+          })()}
           <button className="cwabtn" onClick={onWA} disabled={!cart.length} style={{opacity: cart.length ? 1 : .5, cursor: cart.length ? 'pointer' : 'not-allowed'}}>📱 واٹس ایپ پر دریافت</button>
         </div>
       </div>
@@ -687,11 +716,11 @@ function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteP
     const tags = form.tags.split(/،|,/).map(t => t.trim()).filter(Boolean);
     let imgUrl = null;
     if (imgFile) { try { const r = ref(storage, `products/${Date.now()}_${imgFile.name}`); const sn = await uploadBytes(r, imgFile); imgUrl = await getDownloadURL(sn.ref); } catch { imgUrl = await b64(imgFile); } }
-    onSaveProduct({ ...form, tags, imgUrl, editId });
+    onSaveProduct({ ...form, tags, price: form.price ? Number(form.price) : null, imgUrl, editId });
     setForm({ name: "", category: "انجن", tags: "", status: "in-stock" }); setEditId(null); setImgFile(null);
   };
   const startEdit = (p) => {
-    setEditId(p.id); setForm({ name: p.name, category: p.category, tags: (p.tags || []).join("، "), status: p.status });
+    setEditId(p.id); setForm({ name: p.name, category: p.category, tags: (p.tags || []).join("، "), status: p.status, price: p.price || "" });
     document.getElementById("odash")?.scrollIntoView({ behavior: "smooth" });
   };
   const dUpGal = async (files) => {
@@ -732,6 +761,7 @@ function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteP
               </select>
             </div>
             <div className="fg"><label className="fglbl">ٹیگز (کامے سے)</label><input className="fginp" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="مثلاً: ہینو، مزدا" /></div>
+            <div className="fg"><label className="fglbl">قیمت (روپے)</label><input className="fginp" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="مثلاً: 1500" style={{direction:"ltr"}} /></div>
             <div className="fg"><label className="fglbl">حالت</label>
               <select className="fgsel" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
                 <option value="in-stock">دستیاب</option><option value="sold">فروخت شدہ</option>
@@ -872,16 +902,17 @@ export default function App() {
   const handleToggleSelect = (id) => { setSelected(s => { const ns = new Set(s); ns.has(id) ? ns.delete(id) : ns.add(id); return ns; }); };
   const handleAddCart = (id) => {
     const p = products.find(x => x.id === id); if (!p) return;
-    setCart(c => { const ex = c.find(x => x.id === id); return ex ? c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x) : [...c, { id, name: p.name, category: p.category, qty: 1 }]; });
+    setCart(c => { const ex = c.find(x => x.id === id); return ex ? c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x) : [...c, { id, name: p.name, category: p.category, price: p.price || null, qty: 1 }]; });
     notify(`✅ "${p.name}" کارٹ میں شامل`, "ok");
   };
   const handleCartQty = (id, d) => setCart(c => c.map(x => x.id === id ? { ...x, qty: Math.max(1, x.qty + d) } : x));
   const handleCartDelete = (id) => setCart(c => c.filter(x => x.id !== id));
   const handleWA = () => {
     if (!cart.length) return;
-    const items = cart.map(c => `• ${c.name} | قسم: ${c.category} | تعداد: ${c.qty}`).join("\n");
+    const items = cart.map(c => `• ${c.name} | قسم: ${c.category} | تعداد: ${c.qty}${c.price ? ` | قیمت: Rs. ${(c.price * c.qty).toLocaleString()}` : ""}`).join("\n");
+    const subtotal = cart.reduce((a, c) => a + (c.price || 0) * c.qty, 0);
     const total = cart.reduce((a, c) => a + c.qty, 0);
-    const msg = `السلام علیکم میاں صاحب! 🙏\n\nمجھے درج ذیل ${total} پرزوں کی ضرورت ہے:\n\n${items}\n\n━━━━━━━━━━━━\nبراہ کرم قیمت اور دستیابی بتائیں۔\nشکریہ 🚛`;
+    const msg = `السلام علیکم میاں صاحب! 🙏\n\nمجھے درج ذیل ${total} پرزوں کی ضرورت ہے:\n\n${items}\n\n━━━━━━━━━━━━\n${subtotal > 0 ? `تخمینی کل: Rs. ${subtotal.toLocaleString()}\n` : ""}براہ کرم دستیابی کی تصدیق کریں۔\nشکریہ 🚛`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   };
   const handleLogin = async () => {
