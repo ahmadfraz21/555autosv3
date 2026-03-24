@@ -1,51 +1,27 @@
-// 555 فاریور آٹوز — Fully Improved React App
-// All audit issues fixed:
-// ✅ No localStorage at all — Firestore for everything
-// ✅ Credentials moved to env vars (import.meta.env)
-// ✅ Cart panel on RIGHT side (RTL correct)
-// ✅ Notif button only for cart actions
-// ✅ Custom confirm modal (no browser confirm())
-// ✅ Price column in dashboard table
-// ✅ Sort options for products
-// ✅ Image preview before upload
-// ✅ Dynamic copyright year
-// ✅ WhatsApp button in hero
-// ✅ Product modal keeps open after add to cart
-// ✅ Cart badge capped at 99+
-// ✅ Search debounce
-// ✅ useEscKey fixed dependency
-// ✅ Dead code removed
+// 555 فاریور آٹوز — Full React Conversion
+// Drop this file as src/App.jsx in a Vite React project
+// Install: npm create vite@latest my-app -- --template react
+// Then: npm install firebase
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import {
-  getFirestore, collection, doc, onSnapshot,
-  setDoc, deleteDoc, updateDoc, addDoc, serverTimestamp, query, orderBy
-} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // ─── Firebase ────────────────────────────────────────────────────────────────
-// Set these in your .env file as VITE_* variables
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCPZWbVw4XiCjm5n-GbyKuLiYwbmrPCzs0",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "miannazikfareedawan.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "miannazikfareedawan",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "miannazikfareedawan.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "764332761980",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:764332761980:web:99cdf405927e708bbbbaf9",
-};
-const firebaseApp = initializeApp(firebaseConfig);
+const firebaseApp = initializeApp({
+  apiKey: "AIzaSyCPZWbVw4XiCjm5n-GbyKuLiYwbmrPCzs0",
+  authDomain: "miannazikfareedawan.firebaseapp.com",
+  projectId: "miannazikfareedawan",
+  storageBucket: "miannazikfareedawan.firebasestorage.app",
+  messagingSenderId: "764332761980",
+  appId: "1:764332761980:web:99cdf405927e708bbbbaf9",
+});
 const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
 const storage = getStorage(firebaseApp);
 
-// ─── Owner credentials — use env vars in production ──────────────────────────
-const OWNER_USER = import.meta.env.VITE_OWNER_USER || "mianalpha";
-const OWNER_PASS = import.meta.env.VITE_OWNER_PASS || "alipur786";
-const WA = "923001974040";
-
-// ─── Categories ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+const OU = "mianalpha", OP = "alipur786", WA = "923001974040";
 const CATS = [
   { id: "سب", n: "سب", i: "🔩" },
   { id: "انجن", n: "انجن", i: "🔧" },
@@ -55,7 +31,6 @@ const CATS = [
   { id: "باڈی پارٹس", n: "باڈی پارٹس", i: "🚛" },
   { id: "دیگر", n: "دیگر", i: "📦" },
 ];
-
 const DEMO_PRODUCTS = [
   { id: "p1", name: "ایئر فلٹر ہینو", category: "انجن", tags: ["ہینو", "فلٹر"], status: "in-stock", price: 1500 },
   { id: "p2", name: "بریک پیڈ مزدا", category: "بریک", tags: ["مزدا", "بریک"], status: "in-stock", price: 2200 },
@@ -71,15 +46,15 @@ const DEMO_PRODUCTS = [
   { id: "p12", name: "بریک ڈرم", category: "بریک", tags: ["ڈرم", "بریک"], status: "in-stock", price: 3800 },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const ls = {
+  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
 const b64 = (file) => new Promise((res, rej) => {
-  const r = new FileReader();
-  r.onload = () => res(r.result);
-  r.onerror = rej;
-  r.readAsDataURL(file);
+  const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
 });
 const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-const currentYear = new Date().getFullYear();
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -92,7 +67,7 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .translated-ltr #nb{direction:ltr}
 .translated-ltr .h555{direction:ltr}
 .translated-ltr .fgrd,.translated-ltr .agrid,.translated-ltr .wgrid,.translated-ltr .pgrid,.translated-ltr .cgrid,.translated-ltr .fgrid,.translated-ltr .kgrid{direction:ltr;text-align:left}
-.translated-ltr #cpanel{right:0;left:auto;border-left:1px solid rgba(204,0,0,.15);border-right:none}
+.translated-ltr #cpanel{left:auto;right:0;border-right:none;border-left:1px solid rgba(204,0,0,.15)}
 .translated-ltr .citem,.translated-ltr .cinf{direction:ltr;text-align:left}
 .translated-ltr footer,.translated-ltr .fbot{direction:ltr;text-align:left}
 .translated-ltr .stitle{direction:ltr}
@@ -126,7 +101,7 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .dmenu a:hover{background:rgba(204,0,0,.08);color:var(--red)}
 .cbtn{position:relative;padding:8px 16px;background:var(--red);color:white!important;border-radius:10px;font-family:var(--font);font-size:.9rem;border:none;cursor:pointer;transition:var(--tr)}
 .cbtn:hover{background:var(--rd)!important;transform:translateY(-1px)}
-.cbadge{position:absolute;top:-6px;left:-6px;background:var(--org);color:white;border-radius:50%;min-width:20px;height:20px;font-size:.7rem;padding:0 4px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-weight:bold}
+.cbadge{position:absolute;top:-6px;left:-6px;background:var(--org);color:white;border-radius:50%;width:20px;height:20px;font-size:.7rem;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-weight:bold}
 .obadge{background:linear-gradient(135deg,var(--org),var(--red));color:white;padding:4px 12px;border-radius:20px;font-size:.8rem;font-family:var(--font)}
 .hbgr{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:transparent;border:none}
 .hbgr span{display:block;width:24px;height:2px;background:var(--blk);border-radius:2px;transition:var(--tr)}
@@ -158,7 +133,6 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .hdot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:var(--tr)}.hdot.active{background:var(--org);width:24px;border-radius:4px}
 .bp{padding:14px 32px;background:var(--red);color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1.1rem;cursor:pointer;transition:var(--tr);box-shadow:0 4px 20px rgba(204,0,0,.4);display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;direction:rtl}.bp:hover{background:var(--rd);transform:translateY(-3px)}
 .bg{padding:14px 32px;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:12px;font-family:var(--font);font-size:1.1rem;cursor:pointer;backdrop-filter:var(--blur);transition:var(--tr);display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;direction:rtl}.bg:hover{background:rgba(255,255,255,.25);transform:translateY(-3px)}
-.bwa{padding:14px 32px;background:#25d366;color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1.1rem;cursor:pointer;transition:var(--tr);display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;direction:rtl;text-decoration:none}.bwa:hover{background:#128c7e;transform:translateY(-3px)}
 #gcrl{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:12px;scrollbar-width:thin;scrollbar-color:rgba(204,0,0,.3) transparent}
 #gcrl::-webkit-scrollbar{height:4px}#gcrl::-webkit-scrollbar-thumb{background:rgba(204,0,0,.3);border-radius:2px}
 .gcard{flex:0 0 280px;scroll-snap-align:start;border-radius:16px;overflow:hidden;position:relative;border:1px solid rgba(204,0,0,.1);transition:var(--tr);box-shadow:0 4px 16px rgba(0,0,0,.08)}
@@ -176,12 +150,8 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .cchip:hover{background:rgba(204,0,0,.08);border-color:var(--red);transform:translateY(-4px)}.cchip.ac{background:var(--red);color:white}
 .cname{font-family:var(--font);font-size:1rem;font-weight:600;display:block;margin-top:6px}.cic{font-size:1.8rem}
 .cdot{position:absolute;top:8px;left:8px;width:10px;height:10px;background:var(--org);border-radius:50%;box-shadow:0 0 8px var(--org)}
-.sort-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-.sort-lbl{font-family:var(--font);font-size:.9rem;color:#888}
-.sort-btn{padding:7px 16px;border:1px solid rgba(204,0,0,.2);border-radius:20px;background:transparent;font-family:var(--font);font-size:.85rem;cursor:pointer;transition:var(--tr);color:var(--blk)}
-.sort-btn:hover{border-color:var(--red);color:var(--red)}.sort-btn.active{background:var(--red);color:white;border-color:var(--red)}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
-.pcard{background:rgba(255,255,255,.75);backdrop-filter:var(--blur);border:1px solid rgba(204,0,0,.12);border-radius:18px;padding:24px 20px;transition:var(--tr);position:relative;cursor:pointer}
+.pcard{background:rgba(255,255,255,.75);backdrop-filter:var(--blur);border:1px solid rgba(204,0,0,.12);border-radius:18px;padding:24px 20px;transition:var(--tr);position:relative}
 .pcard:hover{transform:translateY(-6px);border-color:rgba(204,0,0,.3);box-shadow:0 12px 40px rgba(0,0,0,.1)}.pcard.sel{border-color:var(--org);background:rgba(255,102,0,.06);box-shadow:0 0 0 2px var(--org)}.pcard.sold-card{opacity:.6}
 .pbadge{position:absolute;top:14px;left:14px;padding:4px 10px;border-radius:20px;font-size:.75rem;font-family:var(--font);font-weight:600}
 .bin{background:rgba(0,180,0,.12);color:#008800;border:1px solid rgba(0,180,0,.2)}.bsold{background:rgba(204,0,0,.12);color:var(--red);border:1px solid rgba(204,0,0,.2)}
@@ -229,12 +199,10 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .fgsel{padding:11px 14px;border:1px solid rgba(204,0,0,.2);border-radius:10px;font-family:var(--font);font-size:.95rem;background:rgba(255,255,255,.85);direction:rtl;outline:none;cursor:pointer;width:100%}
 .svbtn{padding:13px 28px;background:var(--red);color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1rem;cursor:pointer;transition:var(--tr)}.svbtn:hover{background:var(--rd);transform:translateY(-2px)}
 .cxbtn{padding:13px 20px;background:rgba(0,0,0,.06);color:var(--blk);border:none;border-radius:12px;font-family:var(--font);font-size:1rem;cursor:pointer}
-.img-preview{width:100%;height:120px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid rgba(204,0,0,.1)}
 .ptbl{width:100%;border-collapse:collapse}.ptbl th{font-family:var(--font);font-size:.85rem;color:#888;padding:10px 12px;text-align:right;border-bottom:1px solid rgba(204,0,0,.1);font-weight:600}.ptbl td{font-family:var(--font);font-size:.88rem;padding:12px;border-bottom:1px solid rgba(204,0,0,.06);vertical-align:middle}
 .tcat{display:inline-block;padding:3px 9px;background:rgba(204,0,0,.08);border-radius:20px;font-size:.78rem;color:var(--red)}
 .tin{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;background:rgba(0,180,0,.1);color:#008800;border:1px solid rgba(0,180,0,.2)}
 .tsold{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600;background:rgba(204,0,0,.1);color:var(--red);border:1px solid rgba(204,0,0,.2)}
-.tprice{font-family:'Arial Black',sans-serif;font-size:.82rem;color:var(--red);direction:ltr;display:inline-block}
 .tacts{display:flex;gap:5px;flex-wrap:wrap}.tsm{padding:5px 11px;border:none;border-radius:8px;font-family:var(--font);font-size:.78rem;cursor:pointer;transition:var(--tr)}
 .ted{background:rgba(0,100,255,.1);color:#0066cc}.ted:hover{background:#0066cc;color:white}
 .tdl{background:rgba(204,0,0,.1);color:var(--red)}.tdl:hover{background:var(--red);color:white}
@@ -245,8 +213,7 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .gtdel{position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(204,0,0,.85);color:white;border:none;border-radius:50%;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .gtcap{font-family:var(--font);font-size:.72rem;color:#555;padding:4px 6px;background:rgba(255,255,255,.95)}
 .cov{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:1999;backdrop-filter:blur(4px)}
-#cpanel{position:fixed;top:0;right:0;width:420px;height:100vh;background:rgba(255,255,255,.97);backdrop-filter:var(--blur);border-left:1px solid rgba(204,0,0,.15);box-shadow:-4px 0 40px rgba(0,0,0,.15);z-index:2000;display:flex;flex-direction:column;transition:right .4s cubic-bezier(0.4,0,0.2,1)}
-@media(max-width:480px){#cpanel{width:100vw}}
+#cpanel{position:fixed;top:0;left:0;width:420px;height:100vh;background:rgba(255,255,255,.97);backdrop-filter:var(--blur);border-right:1px solid rgba(204,0,0,.15);box-shadow:4px 0 40px rgba(0,0,0,.15);z-index:2000;display:flex;flex-direction:column}
 .chdr{padding:24px 20px;border-bottom:1px solid rgba(204,0,0,.1);display:flex;align-items:center;justify-content:space-between}
 .cttl{font-family:var(--font);font-size:1.4rem;color:var(--red);font-weight:700}
 .ccls{width:36px;height:36px;border:none;background:rgba(204,0,0,.08);border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:var(--tr)}.ccls:hover{background:var(--red);color:white}
@@ -264,7 +231,6 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .dbtn{padding:8px 20px;background:var(--red);color:white;border:none;border-radius:30px;font-family:var(--font);cursor:pointer;font-size:.9rem}
 #notif{position:fixed;top:85px;right:20px;z-index:5000;padding:16px 18px;background:rgba(255,255,255,.98);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);font-family:var(--font);font-size:.95rem;max-width:300px;width:calc(100vw - 40px);animation:slideIn .35s cubic-bezier(0.34,1.56,0.64,1);border:1px solid rgba(204,0,0,.08)}
 .notif-ok{border-right:4px solid green}.notif-er{border-right:4px solid var(--red)}
-@keyframes slideIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
 .cfbox{background:white;border-radius:20px;padding:36px 32px;text-align:center;max-width:360px;width:90%;animation:scIn .3s ease}
 @keyframes scIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .cfic{font-size:2.5rem;margin-bottom:12px}.cftt{font-family:var(--font);font-size:1.3rem;color:var(--blk);margin-bottom:8px;font-weight:700}.cfmsg{font-family:var(--font);font-size:1rem;color:#666;margin-bottom:24px}
@@ -276,7 +242,7 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .lbtn{padding:14px;background:linear-gradient(135deg,var(--red),var(--rd));color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1.1rem;cursor:pointer;transition:var(--tr)}.lbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(204,0,0,.4)}
 .lerr{color:var(--red);font-family:var(--font);font-size:.9rem;margin-top:4px}
 .lcls{position:absolute;top:16px;left:16px;width:32px;height:32px;border:none;background:rgba(0,0,0,.08);border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:var(--tr)}.lcls:hover{background:var(--red);color:white}
-#topbtn{position:fixed;bottom:30px;left:24px;width:44px;height:44px;background:var(--red);color:white;border:none;border-radius:12px;font-size:1.2rem;cursor:pointer;z-index:400;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(204,0,0,.3);transition:var(--tr)}.topbtn:hover{transform:translateY(-3px)}
+#topbtn{position:fixed;bottom:80px;left:24px;width:44px;height:44px;background:var(--red);color:white;border:none;border-radius:12px;font-size:1.2rem;cursor:pointer;z-index:400;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(204,0,0,.3);transition:var(--tr)}.topbtn:hover{transform:translateY(-3px)}
 footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top:60px}
 .fgrd{max-width:1300px;margin:0 auto 40px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px}
 @media(max-width:900px){.fgrd{grid-template-columns:1fr 1fr;gap:30px}}
@@ -308,7 +274,8 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 .pdmodal-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
 .pdmodal-addcart{flex:1;padding:14px;background:var(--red);color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1rem;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px}.pdmodal-addcart:hover{background:var(--rd);transform:translateY(-2px)}.pdmodal-addcart:disabled{background:#ccc;cursor:not-allowed;transform:none}
 .pdmodal-wa{flex:1;padding:14px;background:#25d366;color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1rem;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}.pdmodal-wa:hover{background:#128c7e;transform:translateY(-2px)}
-.pdmodal-added{background:rgba(0,180,0,.1);color:#007700;border:1px solid rgba(0,180,0,.2);border-radius:10px;padding:10px;text-align:center;font-family:var(--font);font-size:.9rem;margin-top:10px}
+.pcard{cursor:pointer}
+
 .pprice{font-family:'Arial Black',sans-serif;font-size:1.1rem;color:var(--red);font-weight:900;direction:ltr;display:inline-block;margin-bottom:10px}
 .pprice-na{font-family:var(--font);font-size:.85rem;color:#bbb;margin-bottom:10px}
 .cart-subtotal{background:rgba(204,0,0,.05);border:1px solid rgba(204,0,0,.1);border-radius:12px;padding:14px 16px;margin-bottom:12px}
@@ -318,7 +285,8 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 .cart-subtotal-val{font-family:'Arial Black',sans-serif;font-size:.9rem;color:var(--blk);direction:ltr}
 .cart-subtotal-total{font-family:'Arial Black',sans-serif;font-size:1.1rem;color:var(--red);direction:ltr}
 .ciprice{font-family:'Arial Black',sans-serif;font-size:.8rem;color:var(--red);direction:ltr;display:block;margin-top:2px}
-.srchbar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.85);border:1.5px solid rgba(204,0,0,.18);border-radius:14px;padding:10px 18px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.06);transition:border-color .3s}
+
+.srchbar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.85);border:1.5px solid rgba(204,0,0,.18);border-radius:14px;padding:10px 18px;margin-bottom:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);transition:border-color .3s}
 .srchbar:focus-within{border-color:var(--red);box-shadow:0 0 0 3px rgba(204,0,0,.1)}
 .srchbar input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:1rem;direction:rtl;outline:none;color:var(--blk)}
 .srchbar input::placeholder{color:#bbb}
@@ -330,18 +298,20 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 .cart-clear{padding:8px 18px;background:rgba(204,0,0,.08);color:var(--red);border:1px solid rgba(204,0,0,.15);border-radius:10px;font-family:var(--font);font-size:.85rem;cursor:pointer;transition:var(--tr);width:100%;margin-bottom:10px}.cart-clear:hover{background:rgba(204,0,0,.15)}
 .no-results{text-align:center;padding:60px 20px;font-family:var(--font);color:#aaa;font-size:1.1rem}
 .no-results .nr-icon{font-size:3rem;margin-bottom:12px}
+
 #lb-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;cursor:pointer}
 #lb-overlay img{max-width:92vw;max-height:80vh;border-radius:12px}
-.loading-products{text-align:center;padding:60px 20px;font-family:var(--font);color:#aaa;font-size:1.1rem}
 `;
 
-// ─── Hooks ────────────────────────────────────────────────────────────────────
+// ─── Scroll animation hook ────────────────────────────────────────────────────
 function useGoogleTranslateFix() {
   useEffect(() => {
     const fix = () => {
       const isTranslated = document.documentElement.classList.contains('translated-ltr') ||
         document.body.classList.contains('translated-ltr');
-      if (isTranslated) document.documentElement.style.direction = 'ltr';
+      if (isTranslated) {
+        document.documentElement.style.direction = 'ltr';
+      }
     };
     const obs = new MutationObserver(fix);
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -351,10 +321,8 @@ function useGoogleTranslateFix() {
 }
 
 function useEscKey(handlers) {
-  const handlersRef = useRef(handlers);
-  useEffect(() => { handlersRef.current = handlers; });
   useEffect(() => {
-    const fn = (e) => { if (e.key === 'Escape') handlersRef.current.forEach(h => h && h()); };
+    const fn = (e) => { if (e.key === 'Escape') handlers.forEach(h => h && h()); };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
   }, []);
@@ -366,63 +334,52 @@ function useScrollAnim() {
       (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); obs.unobserve(e.target); } }),
       { rootMargin: "0px 0px -50px 0px", threshold: 0.1 }
     );
-    const container = document.body;
-    const observe = () => container.querySelectorAll(".sa:not(.in),.stitle:not(.in)").forEach((el) => obs.observe(el));
+    const observe = () => document.querySelectorAll(".sa:not(.in),.stitle:not(.in)").forEach((el) => obs.observe(el));
     observe();
     const mo = new MutationObserver(observe);
-    mo.observe(container, { childList: true, subtree: true });
+    mo.observe(document.body, { childList: true, subtree: true });
     return () => { obs.disconnect(); mo.disconnect(); };
   }, []);
 }
 
-function useDebounce(value, delay) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return debounced;
-}
-
 // ─── Notification ─────────────────────────────────────────────────────────────
-function Notif({ msg, type, isCartNotif, onDone, onCartClick }) {
+function Notif({ msg, type, onDone, onCartClick }) {
   useEffect(() => { const t = setTimeout(onDone, 4000); return () => clearTimeout(t); }, [msg]);
   if (!msg) return null;
+  const isCartMsg = type === "ok";
   return (
     <div id="notif" className={type === "ok" ? "notif-ok" : "notif-er"}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: isCartNotif ? 12 : 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: isCartMsg ? 12 : 0 }}>
         <span style={{ fontSize: "1.3rem" }}>{type === "ok" ? "✅" : "❌"}</span>
         <span style={{ fontFamily: "var(--font)", fontSize: "1rem", flex: 1 }}>{msg}</span>
         <button onClick={onDone} style={{ background: "none", border: "none", cursor: "pointer", color: "#bbb", fontSize: "1rem", padding: "2px 6px", borderRadius: 6, lineHeight: 1 }}>✕</button>
       </div>
-      {isCartNotif && (
+      {isCartMsg && (
         <button
           onClick={() => { onCartClick(); onDone(); }}
-          style={{ width: "100%", padding: "10px 0", background: "linear-gradient(135deg,var(--red),#ff4422)", color: "white", border: "none", borderRadius: 10, fontFamily: "var(--font)", fontSize: "1rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 14px rgba(204,0,0,.25)", transition: "all .2s" }}
+          style={{
+            width: "100%",
+            padding: "10px 0",
+            background: "linear-gradient(135deg, var(--red), #ff4422)",
+            color: "white",
+            border: "none",
+            borderRadius: 10,
+            fontFamily: "var(--font)",
+            fontSize: "1rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            boxShadow: "0 4px 14px rgba(204,0,0,.25)",
+            transition: "all .2s",
+          }}
           onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
           onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
         >
           🛒 کارٹ دیکھیں
         </button>
       )}
-    </div>
-  );
-}
-
-// ─── Custom Confirm Modal ──────────────────────────────────────────────────────
-function ConfirmModal({ open, icon, title, msg, onYes, onNo }) {
-  if (!open) return null;
-  return (
-    <div style={{ display: "flex", position: "fixed", inset: 0, zIndex: 4000, background: "rgba(0,0,0,.5)", backdropFilter: "blur(10px)", alignItems: "center", justifyContent: "center" }}>
-      <div className="cfbox">
-        <div className="cfic">{icon || "⚠️"}</div>
-        <div className="cftt">{title || "تصدیق"}</div>
-        <div className="cfmsg">{msg}</div>
-        <div className="cfbtns">
-          <button className="cfy" onClick={onYes}>ہاں</button>
-          <button className="cfn" onClick={onNo}>نہیں</button>
-        </div>
-      </div>
     </div>
   );
 }
@@ -454,7 +411,6 @@ function Lightbox({ img, cap, onClose }) {
 function Navbar({ isOwner, cartCount, onCart, onLogin, onLogout, onCat, onDash }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
-  const badgeLabel = cartCount > 99 ? "99+" : cartCount;
   return (
     <nav id="nb">
       <div className="nlogo" onClick={() => window.scrollTo(0, 0)}>
@@ -478,7 +434,7 @@ function Navbar({ isOwner, cartCount, onCart, onLogin, onLogout, onCat, onDash }
         {isOwner && <li><span className="obadge">👑 میاں صاحب موڈ</span></li>}
         <li>
           <button className="cbtn" onClick={onCart} title="کارٹ کھولیں">
-            🛒 کارٹ {cartCount > 0 && <span className="cbadge">{badgeLabel}</span>}
+            🛒 کارٹ {cartCount > 0 && <span className="cbadge">{cartCount}</span>}
           </button>
         </li>
       </ul>
@@ -493,7 +449,6 @@ function Hero() {
     const t = setInterval(() => setSlide(s => (s + 1) % 3), 4000);
     return () => clearInterval(t);
   }, []);
-  const waHeroMsg = encodeURIComponent("السلام علیکم میاں صاحب! 🙏\nمجھے ٹرک پارٹس کے بارے میں معلومات چاہیے۔");
   return (
     <div id="hero">
       {[0, 1, 2].map(i => <div key={i} className={`hs hs${i + 1}${slide === i ? " active" : ""}`} />)}
@@ -504,7 +459,6 @@ function Hero() {
         <div className="hsub">ٹرک پارٹس کے ماہر — مزدا بیڈفورڈ، ہینو، نسان</div>
         <div className="hcta">
           <button className="bp" onClick={() => scrollTo("sprods")}>🔩 پرزے دیکھیں</button>
-          <a href={`https://wa.me/${WA}?text=${waHeroMsg}`} target="_blank" rel="noreferrer" className="bwa">💬 واٹس ایپ</a>
           <button className="bg" onClick={() => scrollTo("scon")}>📞 رابطہ کریں</button>
         </div>
       </div>
@@ -519,7 +473,6 @@ function Gallery({ gallery, isOwner, onUpload, onDelete, onLightbox }) {
   const [capInp, setCapInp] = useState("");
   const [fileInp, setFileInp] = useState(null);
   const [upStat, setUpStat] = useState("");
-
   const doUpload = async () => {
     if (!fileInp || !fileInp.length) return;
     setUpStat("اپلوڈ ہو رہی ہے...");
@@ -527,7 +480,6 @@ function Gallery({ gallery, isOwner, onUpload, onDelete, onLightbox }) {
     setCapInp(""); setFileInp(null); setUpStat("✅ شامل ہو گئیں");
     setTimeout(() => setUpStat(""), 3000);
   };
-
   return (
     <div id="sgal" style={{ background: "rgba(250,248,248,.6)", padding: "70px 0" }}>
       <div className="sec" style={{ paddingTop: 0, paddingBottom: 0 }}>
@@ -556,7 +508,7 @@ function Gallery({ gallery, isOwner, onUpload, onDelete, onLightbox }) {
               : gallery.map((g, i) => (
                 <div key={g.id} className="gcard sa ss" style={{ transitionDelay: `${i * .08}s` }}>
                   {isOwner && <button className="gdel" onClick={() => onDelete(g.id)}>✕</button>}
-                  <img src={g.url} alt={g.caption || ""} loading="lazy" onClick={() => onLightbox(g.url, g.caption || "")} />
+                  <img src={g.url} alt={g.caption || ""} onClick={() => onLightbox(g.url, g.caption || "")} />
                   {g.caption && <div className="gcap">{g.caption}</div>}
                 </div>
               ))
@@ -608,7 +560,7 @@ function Categories({ products, activeCat, selected, onCat }) {
               {hasSel && <div className="cdot" />}
               <span className="cic">{c.i}</span>
               <span className="cname">{c.n}</span>
-              <small style={{ fontSize: ".72rem", color: activeCat === c.id ? "rgba(255,255,255,.7)" : "#999", fontFamily: "Arial,sans-serif" }}>({cnt})</small>
+              <small style={{ fontSize: ".72rem", color: "#999", fontFamily: "Arial,sans-serif" }}>({cnt})</small>
             </div>
           );
         })}
@@ -618,29 +570,20 @@ function Categories({ products, activeCat, selected, onCat }) {
 }
 
 // ─── Product Detail Modal ─────────────────────────────────────────────────────
-function ProductModal({ product, onClose, onAddCart, cartIds }) {
-  const [added, setAdded] = useState(false);
+function ProductModal({ product, onClose, onAddCart }) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
   if (!product) return null;
   const isSold = product.status === "sold";
-  const inCart = cartIds.has(product.id);
   const waMsg = encodeURIComponent(`السلام علیکم میاں صاحب! 🙏\n\nمجھے یہ پرزہ چاہیے:\n• ${product.name}\n• قسم: ${product.category}${product.price ? `\n• قیمت: Rs. ${product.price.toLocaleString()}` : ""}\n\nبراہ کرم دستیابی بتائیں۔`);
-
-  const handleAdd = () => {
-    onAddCart(product.id);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
-
   return (
     <div className="pdmodal-overlay" onClick={onClose}>
       <div className="pdmodal" onClick={e => e.stopPropagation()}>
         <button className="pdmodal-close" onClick={onClose}>✕</button>
         {product.imgUrl
-          ? <img src={product.imgUrl} alt={product.name} className="pdmodal-img" loading="lazy" />
+          ? <img src={product.imgUrl} alt={product.name} className="pdmodal-img" />
           : <div className="pdmodal-imgph">🔩</div>
         }
         <div className="pdmodal-body">
@@ -664,16 +607,19 @@ function ProductModal({ product, onClose, onAddCart, cartIds }) {
               </div>
             </div>
           )}
+          <div className="pdmodal-row">
+            <div className="pdmodal-ic">🔢</div>
+            <div><div className="pdmodal-lbl">پرزہ نمبر</div><div className="pdmodal-val" style={{direction:"ltr",fontFamily:"Arial,sans-serif"}}>{product.id.toUpperCase()}</div></div>
+          </div>
           <div className="pdmodal-divider" />
           <div className="pdmodal-actions">
-            <button className="pdmodal-addcart" disabled={isSold} onClick={handleAdd}>
-              {isSold ? "فروخت شدہ" : inCart ? "🛒 مزید شامل کریں" : "🛒 کارٹ میں شامل کریں"}
+            <button className="pdmodal-addcart" disabled={isSold} onClick={() => { onAddCart(product.id); onClose(); }}>
+              {isSold ? "فروخت شدہ" : "🛒 کارٹ میں شامل کریں"}
             </button>
-            <a href={`https://wa.me/${WA}?text=${waMsg}`} target="_blank" rel="noreferrer" className="pdmodal-wa">
+            <a href={`https://wa.me/923001974040?text=${waMsg}`} target="_blank" rel="noreferrer" className="pdmodal-wa">
               💬 واٹس ایپ
             </a>
           </div>
-          {added && <div className="pdmodal-added">✅ کارٹ میں شامل ہو گیا</div>}
         </div>
       </div>
     </div>
@@ -681,75 +627,60 @@ function ProductModal({ product, onClose, onAddCart, cartIds }) {
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
-function Products({ products, activeCat, selected, onToggleSelect, onAddCart, cart, loading }) {
-  const [searchRaw, setSearchRaw] = useState("");
-  const [sort, setSort] = useState("default");
+function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) {
+  const [search, setSearch] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const search = useDebounce(searchRaw, 300);
-  const cartIds = useMemo(() => new Set(cart.map(c => c.id)), [cart]);
-
-  const list = useMemo(() => {
-    let base = activeCat === "سب" ? products : products.filter(p => p.category === activeCat);
-    if (search.trim()) {
-      base = base.filter(p =>
+  const baselist = activeCat === "سب" ? products : products.filter(p => p.category === activeCat);
+  const list = search.trim()
+    ? baselist.filter(p =>
         p.name.includes(search) ||
         p.category.includes(search) ||
         (p.tags || []).some(t => t.includes(search))
-      );
-    }
-    if (sort === "price-asc") base = [...base].sort((a, b) => (a.price || 0) - (b.price || 0));
-    else if (sort === "price-desc") base = [...base].sort((a, b) => (b.price || 0) - (a.price || 0));
-    else if (sort === "name") base = [...base].sort((a, b) => a.name.localeCompare(b.name, 'ur'));
-    else if (sort === "avail") base = [...base].sort((a, b) => a.status === "sold" ? 1 : -1);
-    return base;
-  }, [products, activeCat, search, sort]);
+      )
+    : baselist;
 
   return (
     <div className="sec" id="sprods">
       <h2 className="stitle sa su" id="ptit">{activeCat === "سب" ? "تمام پرزے" : activeCat}</h2>
       <div className="srchbar">
         <span className="srchic">🔍</span>
-        <input value={searchRaw} onChange={e => setSearchRaw(e.target.value)} placeholder="پرزہ تلاش کریں... (نام، قسم، ٹیگ)" />
-        {searchRaw && <button className="srchclear" onClick={() => setSearchRaw("")}>✕</button>}
-      </div>
-      <div className="sort-bar">
-        <span className="sort-lbl">ترتیب:</span>
-        {[["default", "ڈیفالٹ"], ["price-asc", "قیمت ↑"], ["price-desc", "قیمت ↓"], ["avail", "دستیاب پہلے"], ["name", "نام"]].map(([v, l]) => (
-          <button key={v} className={`sort-btn${sort === v ? " active" : ""}`} onClick={() => setSort(v)}>{l}</button>
-        ))}
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="پرزہ تلاش کریں... (نام، قسم، ٹیگ)"
+        />
+        {search && <button className="srchclear" onClick={() => setSearch("")}>✕</button>}
       </div>
       {search && <div className="srch-count">{list.length} نتائج ملے</div>}
-      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={onAddCart} cartIds={cartIds} />}
-      {loading
-        ? <div className="loading-products">⏳ پرزے لوڈ ہو رہے ہیں...</div>
-        : !list.length
-          ? <div className="no-results"><div className="nr-icon">{search ? "🔍" : "📦"}</div><div>{search ? `"${search}" کے لیے کوئی پرزہ نہیں ملا` : "اس قسم میں کوئی پرزہ نہیں"}</div></div>
-          : <div className="pgrid">
-            {list.map((p, i) => {
-              const isSold = p.status === "sold";
-              const isSel = selected.has(p.id);
-              return (
-                <div key={p.id} className={`pcard sa ss${isSel ? " sel" : ""}${isSold ? " sold-card" : ""}`} style={{ transitionDelay: `${Math.min(i * .06, .6)}s` }} onClick={() => setSelectedProduct(p)}>
-                  {p.imgUrl
-                    ? <img src={p.imgUrl} alt={p.name} className="pimg" loading="lazy" />
-                    : <div className="pimg-placeholder">🔩</div>
-                  }
-                  <span className={`pbadge ${isSold ? "bsold" : "bin"}`}>{isSold ? "❌ فروخت شدہ" : "✅ دستیاب"}</span>
-                  <div className="pname">{p.name}</div>
-                  <span className="ptag0">{p.category}</span>
-                  {p.price ? <div className="pprice">Rs. {p.price.toLocaleString()}</div> : <div className="pprice-na">قیمت دریافت کریں</div>}
-                  {p.tags?.length > 0 && <div className="ptags">{p.tags.map((t, ti) => <span key={ti} className="ptag">{t}</span>)}</div>}
-                  <div className="prow">
-                    <label className="chkw" onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
-                      <div className={`chkb${isSel ? " checked" : ""}`}>{isSel && <span style={{ color: "white", fontSize: 12 }}>✓</span>}</div>
-                      <span style={{ fontFamily: "var(--font)", fontSize: ".85rem", color: "#777" }}>منتخب</span>
-                    </label>
-                    <button className="ac2" onClick={e => { e.stopPropagation(); onAddCart(p.id); }} disabled={isSold}>{isSold ? "ناقابل" : "🛒 کارٹ"}</button>
-                  </div>
+      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={onAddCart} />}
+      {!list.length
+        ? <div className="no-results"><div className="nr-icon">{search ? "🔍" : "📦"}</div><div>{search ? `"${search}" کے لیے کوئی پرزہ نہیں ملا` : "اس قسم میں کوئی پرزہ نہیں"}</div></div>
+        : <div className="pgrid">
+          {list.map((p, i) => {
+            const isSold = p.status === "sold";
+            const isSel = selected.has(p.id);
+            return (
+              <div key={p.id} className={`pcard sa ss${isSel ? " sel" : ""}${isSold ? " sold-card" : ""}`} style={{ transitionDelay: `${Math.min(i * .06, .6)}s` }} onClick={() => setSelectedProduct(p)}>
+                {p.imgUrl
+                  ? <img src={p.imgUrl} alt={p.name} className="pimg" />
+                  : <div className="pimg-placeholder">🔩</div>
+                }
+                <span className={`pbadge ${isSold ? "bsold" : "bin"}`}>{isSold ? "❌ فروخت شدہ" : "✅ دستیاب"}</span>
+                <div className="pname">{p.name}</div>
+                <span className="ptag0">{p.category}</span>
+                {p.price ? <div className="pprice">Rs. {p.price.toLocaleString()}</div> : <div className="pprice-na">قیمت دریافت کریں</div>}
+                {p.tags?.length > 0 && <div className="ptags">{p.tags.map((t, ti) => <span key={ti} className="ptag">{t}</span>)}</div>}
+                <div className="prow">
+                  <label className="chkw" onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
+                    <div className={`chkb${isSel ? " checked" : ""}`}>{isSel && <span style={{ color: "white", fontSize: 12 }}>✓</span>}</div>
+                    <span style={{ fontFamily: "var(--font)", fontSize: ".85rem", color: "#777" }}>منتخب</span>
+                  </label>
+                  <button className="ac2" onClick={e => { e.stopPropagation(); onAddCart(p.id); }} disabled={isSold}>{isSold ? "ناقابل" : "🛒 کارٹ"}</button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
+        </div>
       }
     </div>
   );
@@ -784,13 +715,13 @@ function About() {
 function Workers() {
   const workers = [
     { av: "🌟", name: "استاد سلیم", rip: "مرحوم — اللہ کی رحمت ان پر", desc: "استاد سلیم مرحوم ہماری دکان کے بانی کاریگر تھے۔ ان کا ہاتھ لگتا تھا تو بند انجن چل پڑتا تھا۔ اللہ انہیں جنت الفردوس میں جگہ عطا فرمائے، آمین۔" },
-    { av: "🔧", name: "استاد ربو", desc: "استاد ربو بریک اور سسپنشن کے بادشاہ ہیں۔ تیس سال سے زائد عرصے کا تجربہ رکھتے ہیں۔" },
+    { av: "🔧", name: "استاد ربو", desc: "استاد ربو بریک اور سسپنشن کے بادشاہ ہیں۔ تیس سال سے زائد عرصے کا تجربہ رکھتے ہیں۔ ان کے ہاتھ کا کام دیکھ کر ہر کوئی حیران رہ جاتا ہے۔" },
     { av: "⚡", name: "استاد حسین", desc: "استاد حسین برقی نظام کے ماہر الیکٹریشن ہیں۔ وائرنگ، فیوز، الٹرنیٹر، اسٹارٹر — ہر برقی مسئلے کا حل ان کے ہاتھ میں ہے۔" },
     { av: "⚙️", name: "استاد عارف", desc: "برقی نظام کے ماہر — استاد عارف۔ وائرنگ سے لے کر الٹرنیٹر تک، ہر برقی مسئلے کا حل ان کے پاس ہے۔" },
     { av: "🔩", name: "استاد رمضان", desc: "استاد رمضان گیئر باکس اور ٹرانسمیشن کے ماہر ہیں۔ دور دور سے لوگ ان کے پاس ٹرک لے کر آتے ہیں۔" },
-    { av: "🛠️", name: "استاد ماانو", desc: "استاد ماانو باڈی ورک اور ویلڈنگ میں بے مثال ہیں۔ ٹوٹی ہوئی چیسی ہو یا ٹوٹا ہوا فریم، سب درست ہو جاتا ہے۔" },
+    { av: "🛠️", name: "استاد ماااانو", desc: "استاد ماااانو باڈی ورک اور ویلڈنگ میں بے مثال ہیں۔ ٹوٹی ہوئی چیسی ہو یا ٹوٹا ہوا فریم، ان کے ہاتھ لگنے سے سب درست ہو جاتا ہے۔" },
     { av: "🏗️", name: "استاد ملا", desc: "استاد ملا پمپ اور ہائیڈرولک سسٹم کے ماہر ہیں۔ جو کام بڑے بڑے ورکشاپ نہ کر سکیں، وہ کر دیتے ہیں۔" },
-    { av: "🔑", name: "استاد صابر", desc: "استاد صابر اسٹیئرنگ اور ایگزاسٹ سسٹم کے ماہر ہیں۔ انیس سال سے اس دکان سے وابستہ ہیں۔" },
+    { av: "🔑", name: "استاد صابر", desc: "استاد صابر اسٹیئرنگ اور ایگزاسٹ سسٹم کے ماہر ہیں۔ انیس سال سے اس دکان سے وابستہ ہیں اور ہر گاہک کو اپنا سمجھتے ہیں۔" },
   ];
   return (
     <div className="sec" id="swrk">
@@ -821,7 +752,7 @@ function Contact() {
           <div className="kitem"><div className="kic">📱</div><div><div className="klbl">دوسرا نمبر</div><a href="tel:+923008529697" className="kval ltr" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 8 }}>+92 300-8529697 <span style={{ fontSize: ".72rem", background: "rgba(0,180,0,.1)", color: "#008800", border: "1px solid rgba(0,180,0,.2)", borderRadius: 20, padding: "2px 8px", fontFamily: "var(--font)" }}>کال کریں</span></a></div></div>
           <div className="kitem"><div className="kic">🕐</div><div><div className="klbl">اوقات کار</div><div className="kval">چوبیس گھنٹے، ساتوں دن</div><div className="livedot"><div className="dotblink" /> ابھی کھلا ہے</div></div></div>
           <a href="tel:+923001974040" className="callbtn">📞 ابھی کال کریں</a>
-          <a href={`https://wa.me/${WA}?text=${encodeURIComponent("السلام علیکم میاں صاحب!")}`} target="_blank" rel="noreferrer" className="wabtn">💬 واٹس ایپ پر میسج کریں</a>
+          <a href={`https://wa.me/923001974040?text=${encodeURIComponent("السلام علیکم میاں صاحب!")}`} target="_blank" rel="noreferrer" className="wabtn">💬 واٹس ایپ پر میسج کریں</a>
         </div>
         <div className="mapbox gl sa sr">
           <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d55196.0!2d71.21!3d29.38!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sAlipur%2C+Punjab!5e0!3m2!1sen!2s!4v1" allowFullScreen loading="lazy" title="555 Forever Autos" />
@@ -833,25 +764,18 @@ function Contact() {
 
 // ─── Cart Panel ───────────────────────────────────────────────────────────────
 function CartPanel({ open, cart, onClose, onQty, onDelete, onWA, onClear }) {
-  const totalQty = cart.reduce((a, c) => a + c.qty, 0);
-  const subtotal = cart.reduce((a, c) => a + (c.price || 0) * c.qty, 0);
-  const hasPrices = cart.some(c => c.price);
-
+  const total = cart.reduce((a, c) => a + c.qty, 0);
   return (
     <>
       {open && <div className="cov" onClick={onClose} />}
-      <div id="cpanel" style={{ right: open ? 0 : -500 }}>
+      <div id="cpanel" style={{ left: open ? 0 : -420, transition: "left .4s cubic-bezier(0.4,0,0.2,1)" }}>
         <div className="chdr"><span className="cttl">🛒 میری کارٹ</span><button className="ccls" onClick={onClose}>✕</button></div>
         <div className="clist">
           {!cart.length
             ? <div className="cempty"><div style={{ fontSize: "3rem" }}>🛒</div><div>کارٹ خالی ہے</div></div>
             : cart.map(it => (
               <div key={it.id} className="citem">
-                <div className="cinf">
-                  <div className="cinm">{it.name}</div>
-                  <div className="cicat">{it.category}</div>
-                  {it.price && <span className="ciprice">Rs. {(it.price * it.qty).toLocaleString()}</span>}
-                </div>
+                <div className="cinf"><div className="cinm">{it.name}</div><div className="cicat">{it.category}</div>{it.price && <span className="ciprice">Rs. {(it.price * it.qty).toLocaleString()}</span>}</div>
                 <div className="ciqty">
                   <button className="qbtn" onClick={() => onQty(it.id, -1)}>−</button>
                   <span className="qnum">{it.qty}</span>
@@ -863,27 +787,31 @@ function CartPanel({ open, cart, onClose, onQty, onDelete, onWA, onClear }) {
           }
         </div>
         <div className="cfoot">
-          {cart.length > 0 && (
-            <>
-              {hasPrices && (
-                <div className="cart-subtotal">
-                  {cart.map(it => it.price ? (
-                    <div key={it.id} className="cart-subtotal-row">
-                      <span className="cart-subtotal-lbl">{it.name} × {it.qty}</span>
-                      <span className="cart-subtotal-val">Rs. {(it.price * it.qty).toLocaleString()}</span>
+          {cart.length > 0 && (() => {
+            const subtotal = cart.reduce((a, c) => a + (c.price || 0) * c.qty, 0);
+            const hasPrices = cart.some(c => c.price);
+            return (
+              <>
+                {hasPrices && (
+                  <div className="cart-subtotal">
+                    {cart.map(it => it.price ? (
+                      <div key={it.id} className="cart-subtotal-row">
+                        <span className="cart-subtotal-lbl">{it.name} × {it.qty}</span>
+                        <span className="cart-subtotal-val">Rs. {(it.price * it.qty).toLocaleString()}</span>
+                      </div>
+                    ) : null)}
+                    <div className="cart-subtotal-row">
+                      <span className="cart-subtotal-lbl">کل رقم</span>
+                      <span className="cart-subtotal-total">Rs. {subtotal.toLocaleString()}</span>
                     </div>
-                  ) : null)}
-                  <div className="cart-subtotal-row">
-                    <span className="cart-subtotal-lbl">کل رقم</span>
-                    <span className="cart-subtotal-total">Rs. {subtotal.toLocaleString()}</span>
                   </div>
-                </div>
-              )}
-              <div className="csum">{totalQty} اشیاء — {cart.length} قسم</div>
-              <button className="cart-clear" onClick={onClear}>🗑️ کارٹ خالی کریں</button>
-            </>
-          )}
-          <button className="cwabtn" onClick={onWA} disabled={!cart.length} style={{ opacity: cart.length ? 1 : .5, cursor: cart.length ? 'pointer' : 'not-allowed' }}>📱 واٹس ایپ پر دریافت</button>
+                )}
+                <div className="csum">{total} اشیاء — {cart.length} قسم</div>
+                <button className="cart-clear" onClick={onClear}>🗑️ کارٹ خالی کریں</button>
+              </>
+            );
+          })()}
+          <button className="cwabtn" onClick={onWA} disabled={!cart.length} style={{opacity: cart.length ? 1 : .5, cursor: cart.length ? 'pointer' : 'not-allowed'}}>📱 واٹس ایپ پر دریافت</button>
         </div>
       </div>
     </>
@@ -891,63 +819,34 @@ function CartPanel({ open, cart, onClose, onQty, onDelete, onWA, onClear }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
-function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteProduct, onUploadGallery, onDeleteGallery, onConfirm }) {
-  const [form, setForm] = useState({ name: "", category: "انجن", tags: "", status: "in-stock", price: "" });
+function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteProduct, onUploadGallery, onDeleteGallery }) {
+  const [form, setForm] = useState({ name: "", category: "انجن", tags: "", status: "in-stock" });
   const [editId, setEditId] = useState(null);
   const [imgFile, setImgFile] = useState(null);
-  const [imgPreview, setImgPreview] = useState(null);
   const [upProg, setUpProg] = useState("");
   const [dgCap, setDgCap] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const handleImgChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImgFile(file);
-    setImgPreview(URL.createObjectURL(file));
-  };
 
   const handleSave = async () => {
     if (!form.name.trim()) return;
-    setSaving(true);
     const tags = form.tags.split(/،|,/).map(t => t.trim()).filter(Boolean);
     let imgUrl = null;
-    if (imgFile) {
-      try {
-        const r = ref(storage, `products/${Date.now()}_${imgFile.name}`);
-        const sn = await uploadBytes(r, imgFile);
-        imgUrl = await getDownloadURL(sn.ref);
-      } catch {
-        imgUrl = await b64(imgFile);
-      }
-    }
-    await onSaveProduct({ ...form, tags, price: form.price ? Number(form.price) : null, imgUrl, editId });
-    setForm({ name: "", category: "انجن", tags: "", status: "in-stock", price: "" });
-    setEditId(null); setImgFile(null); setImgPreview(null); setSaving(false);
+    if (imgFile) { try { const r = ref(storage, `products/${Date.now()}_${imgFile.name}`); const sn = await uploadBytes(r, imgFile); imgUrl = await getDownloadURL(sn.ref); } catch { imgUrl = await b64(imgFile); } }
+    onSaveProduct({ ...form, tags, price: form.price ? Number(form.price) : null, imgUrl, editId });
+    setForm({ name: "", category: "انجن", tags: "", status: "in-stock" }); setEditId(null); setImgFile(null);
   };
-
   const startEdit = (p) => {
-    setEditId(p.id);
-    setForm({ name: p.name, category: p.category, tags: (p.tags || []).join("، "), status: p.status, price: p.price || "" });
-    setImgPreview(p.imgUrl || null);
+    setEditId(p.id); setForm({ name: p.name, category: p.category, tags: (p.tags || []).join("، "), status: p.status, price: p.price || "" });
     document.getElementById("odash")?.scrollIntoView({ behavior: "smooth" });
   };
-
   const dUpGal = async (files) => {
     const arr = Array.from(files);
     setUpProg(`اپلوڈ ہو رہا ہے 0/${arr.length}`);
     for (let i = 0; i < arr.length; i++) {
       setUpProg(`اپلوڈ: ${arr[i].name} (${i + 1}/${arr.length})`);
-      try {
-        const r2 = ref(storage, `gallery/${Date.now()}_${arr[i].name}`);
-        const sn = await uploadBytes(r2, arr[i]);
-        await onUploadGallery([{ url: await getDownloadURL(sn.ref), caption: dgCap }]);
-      } catch {
-        await onUploadGallery([{ url: await b64(arr[i]), caption: dgCap }]);
-      }
+      try { const r2 = ref(storage, `gallery/${Date.now()}_${arr[i].name}`); const sn = await uploadBytes(r2, arr[i]); onUploadGallery([{ id: "g_" + Date.now() + i, url: await getDownloadURL(sn.ref), caption: dgCap }]); }
+      catch { onUploadGallery([{ id: "g_" + Date.now() + i, url: await b64(arr[i]), caption: dgCap }]); }
     }
-    setUpProg(`✅ ${arr.length} تصویر(یں) اپلوڈ ہو گئیں`);
-    setDgCap("");
+    setUpProg(`✅ ${arr.length} تصویر(یں) اپلوڈ ہو گئیں`); setDgCap("");
     setTimeout(() => setUpProg(""), 2500);
   };
 
@@ -958,23 +857,15 @@ function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteP
           <div style={{ fontFamily: "var(--font)", fontSize: "1.8rem", color: "var(--red)", fontWeight: 700 }}>👑 میاں صاحب کا ڈیش بورڈ</div>
           <div style={{ fontFamily: "var(--font)", fontSize: ".9rem", color: "#888", marginTop: 4 }}>پرزے شامل کریں، تصاویر مینیج کریں، اسٹاک کنٹرول کریں</div>
         </div>
-
         {/* Stats */}
         <div className="dstats">
-          {[
-            ["🔩", products.length, "کل پرزے"],
-            ["✅", products.filter(p => p.status === "in-stock").length, "دستیاب"],
-            ["❌", products.filter(p => p.status === "sold").length, "فروخت"],
-            ["📷", gallery.length, "تصاویر"]
-          ].map(([ic, n, l], i) => (
+          {[["🔩", products.length, "کل پرزے"], ["✅", products.filter(p => p.status === "in-stock").length, "دستیاب"], ["❌", products.filter(p => p.status === "sold").length, "فروخت"], ["📷", gallery.length, "تصاویر"]].map(([ic, n, l], i) => (
             <div key={i} className="statc sa ss" style={{ transitionDelay: `${i * .06}s` }}>
-              <div className="stic">{ic}</div>
-              <div><div className="stnum">{n}</div><div className="stlbl">{l}</div></div>
+              <div className="stic">{ic}</div><div><div className="stnum">{n}</div><div className="stlbl">{l}</div></div>
             </div>
           ))}
         </div>
-
-        {/* Add/Edit Form */}
+        {/* Add Form */}
         <div className="dpanel sa su">
           <div className="ptitle">➕ {editId ? "پرزہ ترمیم کریں" : "نیا پرزہ شامل کریں"}</div>
           <div className="aform">
@@ -985,47 +876,38 @@ function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteP
               </select>
             </div>
             <div className="fg"><label className="fglbl">ٹیگز (کامے سے)</label><input className="fginp" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="مثلاً: ہینو، مزدا" /></div>
-            <div className="fg"><label className="fglbl">قیمت (روپے)</label><input className="fginp" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="مثلاً: 1500" style={{ direction: "ltr" }} /></div>
+            <div className="fg"><label className="fglbl">قیمت (روپے)</label><input className="fginp" type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="مثلاً: 1500" style={{direction:"ltr"}} /></div>
             <div className="fg"><label className="fglbl">حالت</label>
               <select className="fgsel" value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
                 <option value="in-stock">دستیاب</option><option value="sold">فروخت شدہ</option>
               </select>
             </div>
-            <div className="fg full">
-              <label className="fglbl">تصویر (اختیاری)</label>
-              <input type="file" className="fginp" accept="image/*" onChange={handleImgChange} />
-              {imgPreview && <img src={imgPreview} alt="preview" className="img-preview" />}
-            </div>
+            <div className="fg full"><label className="fglbl">تصویر (اختیاری)</label><input type="file" className="fginp" accept="image/*" onChange={e => setImgFile(e.target.files[0])} /></div>
             <div className="fg full" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button className="svbtn" onClick={handleSave} disabled={saving}>{saving ? "⏳ محفوظ ہو رہا ہے..." : editId ? "✏️ اپڈیٹ کریں" : "✅ شامل کریں"}</button>
-              {editId && <button className="cxbtn" onClick={() => { setEditId(null); setForm({ name: "", category: "انجن", tags: "", status: "in-stock", price: "" }); setImgPreview(null); }}>منسوخ</button>}
+              <button className="svbtn" onClick={handleSave}>{editId ? "✏️ اپڈیٹ کریں" : "✅ شامل کریں"}</button>
+              {editId && <button className="cxbtn" onClick={() => { setEditId(null); setForm({ name: "", category: "انجن", tags: "", status: "in-stock" }); }}>منسوخ</button>}
             </div>
           </div>
         </div>
-
-        {/* Product Table */}
+        {/* Table */}
         <div className="dpanel sa su" style={{ transitionDelay: ".1s" }}>
           <div className="ptitle">📋 تمام پرزے <span style={{ fontFamily: "Arial,sans-serif", fontSize: ".8rem", color: "#aaa", fontWeight: 400, marginRight: "auto" }}>({products.length})</span></div>
           <div style={{ overflowX: "auto" }}>
             <table className="ptbl">
-              <thead><tr><th>نام</th><th>قسم</th><th>قیمت</th><th>ٹیگز</th><th>حالت</th><th>عمل</th></tr></thead>
+              <thead><tr><th>نام</th><th>قسم</th><th>ٹیگز</th><th>حالت</th><th>عمل</th></tr></thead>
               <tbody>
                 {!products.length
-                  ? <tr><td colSpan={6} style={{ textAlign: "center", padding: 50, fontFamily: "var(--font)", color: "#aaa" }}>کوئی پرزہ نہیں</td></tr>
+                  ? <tr><td colSpan={5} style={{ textAlign: "center", padding: 50, fontFamily: "var(--font)", color: "#aaa" }}>کوئی پرزہ نہیں</td></tr>
                   : products.map(p => (
                     <tr key={p.id}>
-                      <td style={{ fontWeight: 700, fontFamily: "var(--font)" }}>
-                        {p.imgUrl && <img src={p.imgUrl} alt="" style={{ width: 32, height: 32, objectFit: "cover", borderRadius: 6, marginLeft: 8, verticalAlign: "middle" }} />}
-                        {p.name}
-                      </td>
+                      <td style={{ fontWeight: 700, fontFamily: "var(--font)" }}>{p.name}</td>
                       <td><span className="tcat">{p.category}</span></td>
-                      <td>{p.price ? <span className="tprice">Rs. {p.price.toLocaleString()}</span> : <span style={{ color: "#ccc", fontFamily: "var(--font)", fontSize: ".78rem" }}>—</span>}</td>
                       <td>{(p.tags || []).map((t, i) => <span key={i} style={{ padding: "2px 7px", background: "rgba(255,102,0,.08)", borderRadius: 10, fontSize: ".75rem", color: "var(--org)", marginLeft: 3 }}>{t}</span>)}</td>
                       <td><span className={p.status === "in-stock" ? "tin" : "tsold"}>{p.status === "in-stock" ? "✅ دستیاب" : "❌ فروخت"}</span></td>
                       <td><div className="tacts">
                         <button className="tsm ted" onClick={() => startEdit(p)}>✏️</button>
                         <button className="tsm ttg" onClick={() => onToggleStatus(p.id)}>{p.status === "in-stock" ? "فروخت" : "دستیاب"}</button>
-                        <button className="tsm tdl" onClick={() => onConfirm({ msg: `کیا "${p.name}" حذف کریں؟`, onYes: () => onDeleteProduct(p.id) })}>🗑️</button>
+                        <button className="tsm tdl" onClick={() => onDeleteProduct(p.id)}>🗑️</button>
                       </div></td>
                     </tr>
                   ))
@@ -1034,7 +916,6 @@ function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteP
             </table>
           </div>
         </div>
-
         {/* Gallery Manager */}
         <div className="dpanel sa su" style={{ transitionDelay: ".2s" }}>
           <div className="ptitle">📷 گیلری مینیجر</div>
@@ -1045,14 +926,14 @@ function Dashboard({ products, gallery, onSaveProduct, onToggleStatus, onDeleteP
           </label>
           <div style={{ marginBottom: 14 }}><label className="fglbl">عنوان</label><input className="fginp" value={dgCap} onChange={e => setDgCap(e.target.value)} placeholder="مثلاً: دکان کا منظر" style={{ marginTop: 6 }} /></div>
           {upProg && <div style={{ fontFamily: "var(--font)", fontSize: ".85rem", color: "#888", marginBottom: 10 }}>{upProg}</div>}
-          <h3 style={{ fontFamily: "var(--font)", fontSize: ".95rem", color: "#666", margin: "18px 0 10px" }}>موجودہ تصاویر ({gallery.length})</h3>
+          <h3 style={{ fontFamily: "var(--font)", fontSize: ".95rem", color: "#666", margin: "18px 0 10px" }}>موجودہ تصاویر</h3>
           <div className="gthumbs">
             {!gallery.length
               ? <div style={{ fontFamily: "var(--font)", color: "#bbb", fontSize: ".9rem", padding: 16 }}>ابھی کوئی تصویر نہیں</div>
               : gallery.map(g => (
                 <div key={g.id} className="gthumb">
-                  <button className="gtdel" onClick={() => onConfirm({ msg: "تصویر حذف کریں؟", onYes: () => onDeleteGallery(g.id) })}>✕</button>
-                  <img src={g.url} alt={g.caption || ""} loading="lazy" />
+                  <button className="gtdel" onClick={() => onDeleteGallery(g.id)}>✕</button>
+                  <img src={g.url} alt={g.caption || ""} />
                   {g.caption && <div className="gtcap">{g.caption}</div>}
                 </div>
               ))
@@ -1096,7 +977,7 @@ function Footer({ onCat }) {
           <div className="fci">🕐 چوبیس گھنٹے کھلا</div>
         </div>
       </div>
-      <div className="fbot">© {currentYear} 555 فاریور آٹوز — تمام حقوق محفوظ ہیں | علی پور، پنجاب، پاکستان</div>
+      <div className="fbot">© 2025 555 فاریور آٹوز — تمام حقوق محفوظ ہیں | علی پور، پنجاب، پاکستان</div>
     </footer>
   );
 }
@@ -1104,78 +985,50 @@ function Footer({ onCat }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [loaded, setLoaded] = useState(false);
-  const [productsLoading, setProductsLoading] = useState(true);
-  const [products, setProducts] = useState([]);
-  const [gallery, setGallery] = useState([]);
+  const [products, setProducts] = useState(() => {
+    const saved = ls.get("555p", null);
+    // If saved products exist but have no prices, reset to demo products with prices
+    if (!saved || !saved.length || !saved.some(p => p.price)) {
+      ls.set("555p", [...DEMO_PRODUCTS]);
+      return [...DEMO_PRODUCTS];
+    }
+    return saved;
+  });
   const [cart, setCart] = useState([]);
+  const [gallery, setGallery] = useState(() => ls.get("555g", []));
   const [selected, setSelected] = useState(new Set());
   const [activeCat, setActiveCat] = useState("سب");
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState(() => ls.get("555s", "") === "ok");
   const [cartOpen, setCartOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [lightbox, setLightbox] = useState(null);
-  const [notif, setNotif] = useState({ msg: "", type: "ok", isCartNotif: false });
+  const [notif, setNotif] = useState({ msg: "", type: "ok" });
   const [showTop, setShowTop] = useState(false);
   const [loginForm, setLoginForm] = useState({ user: "", pass: "" });
   const [loginErr, setLoginErr] = useState(false);
-  const [confirmState, setConfirmState] = useState({ open: false, msg: "", onYes: null });
-  const [deselectConfirm, setDeselectConfirm] = useState(false);
 
   useScrollAnim();
   useGoogleTranslateFix();
   useEscKey([() => setCartOpen(false), () => setLoginOpen(false), () => setLightbox(null)]);
 
-  // ── Firestore: listen to products ─────────────────────────────────────────
-  useEffect(() => {
-    const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      if (snap.empty) {
-        // Seed demo products on first load
-        Promise.all(DEMO_PRODUCTS.map(p =>
-          setDoc(doc(db, "products", p.id), { ...p, createdAt: serverTimestamp() })
-        ));
-      } else {
-        setProducts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      }
-      setProductsLoading(false);
-    }, () => {
-      // Firestore unavailable — fall back to demo
-      setProducts(DEMO_PRODUCTS);
-      setProductsLoading(false);
-    });
-    return unsub;
-  }, []);
-
-  // ── Firestore: listen to gallery ──────────────────────────────────────────
-  useEffect(() => {
-    const q = query(collection(db, "gallery"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      setGallery(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => setGallery([]));
-    return unsub;
-  }, []);
-
   useEffect(() => { setTimeout(() => setLoaded(true), 1800); }, []);
+  useEffect(() => { ls.set("555p", products); }, [products]);
+  useEffect(() => { ls.set("555g", gallery); }, [gallery]);
   useEffect(() => { const fn = () => setShowTop(window.scrollY > 400); window.addEventListener("scroll", fn); return () => window.removeEventListener("scroll", fn); }, []);
 
-  const notify = useCallback((msg, type = "ok", isCartNotif = false) => setNotif({ msg, type, isCartNotif }), []);
+  const notify = useCallback((msg, type = "ok") => setNotif({ msg, type }), []);
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
 
   const handleCat = (id) => { setActiveCat(id); scrollTo("sprods"); };
   const handleToggleSelect = (id) => { setSelected(s => { const ns = new Set(s); ns.has(id) ? ns.delete(id) : ns.add(id); return ns; }); };
-
   const handleAddCart = (id) => {
     const p = products.find(x => x.id === id); if (!p) return;
-    setCart(c => {
-      const ex = c.find(x => x.id === id);
-      return ex ? c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x) : [...c, { id, name: p.name, category: p.category, price: p.price || null, qty: 1 }];
-    });
-    notify(p.name, "ok", true);
+    setCart(c => { const ex = c.find(x => x.id === id); return ex ? c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x) : [...c, { id, name: p.name, category: p.category, price: p.price || null, qty: 1 }]; });
+    notify(p.name, "ok");
   };
-
   const handleCartQty = (id, d) => setCart(c => c.map(x => x.id === id ? { ...x, qty: Math.max(1, x.qty + d) } : x));
   const handleCartDelete = (id) => setCart(c => c.filter(x => x.id !== id));
-
   const handleWA = () => {
     if (!cart.length) return;
     const items = cart.map(c => `• ${c.name} | قسم: ${c.category} | تعداد: ${c.qty}${c.price ? ` | قیمت: Rs. ${(c.price * c.qty).toLocaleString()}` : ""}`).join("\n");
@@ -1184,58 +1037,30 @@ export default function App() {
     const msg = `السلام علیکم میاں صاحب! 🙏\n\nمجھے درج ذیل ${total} پرزوں کی ضرورت ہے:\n\n${items}\n\n━━━━━━━━━━━━\n${subtotal > 0 ? `تخمینی کل: Rs. ${subtotal.toLocaleString()}\n` : ""}براہ کرم دستیابی کی تصدیق کریں۔\nشکریہ 🚛`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   };
-
   const handleLogin = async () => {
-    if (loginForm.user === OWNER_USER && loginForm.pass === OWNER_PASS) {
-      setIsOwner(true); setLoginOpen(false); setLoginErr(false);
-      notify("میاں صاحب! خوش آمدید", "ok", false);
-      try { await signInWithEmailAndPassword(auth, "mianalpha@555forever.com", OWNER_PASS); } catch {}
+    if (loginForm.user === OU && loginForm.pass === OP) {
+      ls.set("555s", "ok"); setIsOwner(true); setLoginOpen(false); setLoginErr(false);
+      notify("✅ میاں صاحب! خوش آمدید", "ok");
+      try { await signInWithEmailAndPassword(auth, "mianalpha@555forever.com", "alipur786"); } catch {}
     } else { setLoginErr(true); setLoginForm(f => ({ ...f, pass: "" })); }
   };
-
-  const handleLogout = async () => {
-    setIsOwner(false);
-    notify("لاگ آؤٹ ہو گئے", "ok", false);
-    try { await signOut(auth); } catch {}
+  const handleLogout = async () => { ls.set("555s", ""); setIsOwner(false); notify("👋 لاگ آؤٹ ہو گئے", "ok"); try { await signOut(auth); } catch {} };
+  const handleSaveProduct = ({ name, category, tags, status, price, imgUrl, editId }) => {
+    if (editId) { setProducts(p => p.map(x => x.id === editId ? { ...x, name, category, tags, status, price, ...(imgUrl && { imgUrl }) } : x)); notify(`✅ "${name}" اپڈیٹ ہوا`, "ok"); }
+    else { setProducts(p => [...p, { id: "p_" + Date.now(), name, category, tags, status, price, ...(imgUrl && { imgUrl }) }]); notify(`✅ "${name}" شامل کر دیا`, "ok"); }
   };
-
-  const handleSaveProduct = async ({ name, category, tags, status, price, imgUrl, editId }) => {
-    const data = { name, category, tags, status, price: price || null, ...(imgUrl && { imgUrl }) };
-    if (editId) {
-      await updateDoc(doc(db, "products", editId), data);
-      notify(`"${name}" اپڈیٹ ہوا`, "ok", false);
-    } else {
-      await addDoc(collection(db, "products"), { ...data, createdAt: serverTimestamp() });
-      notify(`"${name}" شامل کر دیا`, "ok", false);
+  const handleToggleStatus = (id) => { setProducts(p => p.map(x => x.id === id ? { ...x, status: x.status === "in-stock" ? "sold" : "in-stock" } : x)); notify("✅ حالت تبدیل ہوئی", "ok"); };
+  const handleDeleteProduct = (id) => { if (!confirm("حذف کریں؟")) return; setProducts(p => p.filter(x => x.id !== id)); notify("🗑️ پرزہ حذف ہو گیا", "ok"); };
+  const handleUploadGallery = async (files, cap) => {
+    const newItems = [];
+    for (const f of files) {
+      try { const r = ref(storage, `gallery/${Date.now()}_${f.name}`); const sn = await uploadBytes(r, f); newItems.push({ id: "g_" + Date.now(), url: await getDownloadURL(sn.ref), caption: cap }); }
+      catch { newItems.push({ id: "g_" + Date.now(), url: await b64(f), caption: cap }); }
     }
+    setGallery(g => [...g, ...newItems]); notify(`✅ ${files.length} تصویر(یں) شامل`, "ok");
   };
-
-  const handleToggleStatus = async (id) => {
-    const p = products.find(x => x.id === id); if (!p) return;
-    await updateDoc(doc(db, "products", id), { status: p.status === "in-stock" ? "sold" : "in-stock" });
-    notify("حالت تبدیل ہوئی", "ok", false);
-  };
-
-  const handleDeleteProduct = async (id) => {
-    await deleteDoc(doc(db, "products", id));
-    notify("پرزہ حذف ہو گیا", "ok", false);
-  };
-
-  const handleUploadGallery = async (items) => {
-    for (const item of items) {
-      await addDoc(collection(db, "gallery"), { url: item.url, caption: item.caption || "", createdAt: serverTimestamp() });
-    }
-    notify(`${items.length} تصویر(یں) شامل`, "ok", false);
-  };
-
-  const handleDeleteGallery = async (id) => {
-    await deleteDoc(doc(db, "gallery", id));
-    notify("تصویر حذف ہو گئی", "ok", false);
-  };
-
-  const handleConfirm = ({ msg, onYes }) => {
-    setConfirmState({ open: true, msg, onYes });
-  };
+  const handleUploadGalleryItems = (items) => setGallery(g => [...g, ...items]);
+  const handleDeleteGallery = (id) => { if (!confirm("تصویر حذف کریں؟")) return; setGallery(g => g.filter(x => x.id !== id)); notify("🗑️ تصویر حذف ہو گئی", "ok"); };
 
   return (
     <>
@@ -1261,43 +1086,26 @@ export default function App() {
         </div>
       )}
 
-      {/* Generic Confirm Modal */}
-      <ConfirmModal
-        open={confirmState.open}
-        msg={confirmState.msg}
-        onYes={() => { confirmState.onYes?.(); setConfirmState({ open: false, msg: "", onYes: null }); }}
-        onNo={() => setConfirmState({ open: false, msg: "", onYes: null })}
-      />
-
-      {/* Deselect Confirm */}
-      <ConfirmModal
-        open={deselectConfirm}
-        icon="⚠️"
-        title="تصدیق"
-        msg="کیا آپ تمام منتخب اشیاء ہٹانا چاہتے ہیں؟"
-        onYes={() => { setSelected(new Set()); setDeselectConfirm(false); notify("تمام انتخاب ہٹا دیے گئے", "ok", false); }}
-        onNo={() => setDeselectConfirm(false)}
-      />
-
-      <CartPanel open={cartOpen} cart={cart} onClose={() => setCartOpen(false)} onQty={handleCartQty} onDelete={handleCartDelete} onWA={handleWA} onClear={() => { setCart([]); notify("کارٹ خالی ہو گئی", "ok", false); }} />
-
-      {selected.size > 0 && (
-        <div id="dbar">
-          <span style={{ fontFamily: "var(--font)" }}>{selected.size} اشیاء منتخب</span>
-          <button className="dbtn" onClick={() => setDeselectConfirm(true)}>🗑️ سب ہٹائیں</button>
+      {/* Confirm Deselect */}
+      {confirmOpen && (
+        <div style={{ display: "flex", position: "fixed", inset: 0, zIndex: 4000, background: "rgba(0,0,0,.5)", backdropFilter: "blur(10px)", alignItems: "center", justifyContent: "center" }}>
+          <div className="cfbox">
+            <div className="cfic">⚠️</div><div className="cftt">تصدیق</div>
+            <div className="cfmsg">کیا آپ تمام منتخب اشیاء ہٹانا چاہتے ہیں؟</div>
+            <div className="cfbtns">
+              <button className="cfy" onClick={() => { setSelected(new Set()); setConfirmOpen(false); notify("✅ تمام انتخاب ہٹا دیے گئے", "ok"); }}>ہاں، ہٹائیں</button>
+              <button className="cfn" onClick={() => setConfirmOpen(false)}>نہیں</button>
+            </div>
+          </div>
         </div>
       )}
 
-      {notif.msg && (
-        <Notif
-          msg={notif.msg}
-          type={notif.type}
-          isCartNotif={notif.isCartNotif}
-          onDone={() => setNotif({ msg: "", type: "ok", isCartNotif: false })}
-          onCartClick={() => setCartOpen(true)}
-        />
+      <CartPanel open={cartOpen} cart={cart} onClose={() => setCartOpen(false)} onQty={handleCartQty} onDelete={handleCartDelete} onWA={handleWA} onClear={() => { setCart([]); notify('🗑️ کارٹ خالی ہو گئی', 'ok'); }} />
+      {selected.size > 0 && (
+        <div id="dbar"><span style={{ fontFamily: "var(--font)" }}>{selected.size} اشیاء منتخب</span><button className="dbtn" onClick={() => setConfirmOpen(true)}>🗑️ سب ہٹائیں</button></div>
       )}
 
+      {notif.msg && <Notif msg={notif.msg} type={notif.type} onDone={() => setNotif({ msg: "", type: "ok" })} onCartClick={() => setCartOpen(true)} />}
       {showTop && <button id="topbtn" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑</button>}
       <Lightbox img={lightbox?.img} cap={lightbox?.cap} onClose={() => setLightbox(null)} />
 
@@ -1305,22 +1113,11 @@ export default function App() {
       <Gallery gallery={gallery} isOwner={isOwner} onUpload={handleUploadGallery} onDelete={handleDeleteGallery} onLightbox={(img, cap) => setLightbox({ img, cap })} />
       <Features />
       <Categories products={products} activeCat={activeCat} selected={selected} onCat={handleCat} />
-      <Products products={products} activeCat={activeCat} selected={selected} onToggleSelect={handleToggleSelect} onAddCart={handleAddCart} cart={cart} loading={productsLoading} />
+      <Products products={products} activeCat={activeCat} selected={selected} onToggleSelect={handleToggleSelect} onAddCart={handleAddCart} />
       <About />
       <Workers />
       <Contact />
-      {isOwner && (
-        <Dashboard
-          products={products}
-          gallery={gallery}
-          onSaveProduct={handleSaveProduct}
-          onToggleStatus={handleToggleStatus}
-          onDeleteProduct={handleDeleteProduct}
-          onUploadGallery={handleUploadGallery}
-          onDeleteGallery={handleDeleteGallery}
-          onConfirm={handleConfirm}
-        />
-      )}
+      {isOwner && <Dashboard products={products} gallery={gallery} onSaveProduct={handleSaveProduct} onToggleStatus={handleToggleStatus} onDeleteProduct={handleDeleteProduct} onUploadGallery={handleUploadGallery} onDeleteGallery={handleDeleteGallery} />}
       <Footer onCat={handleCat} />
     </>
   );
