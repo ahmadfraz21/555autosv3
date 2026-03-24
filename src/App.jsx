@@ -229,8 +229,7 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .cempty{text-align:center;padding:60px 20px;color:#888;font-family:var(--font);font-size:1.1rem}
 #dbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:500;background:rgba(255,255,255,.92);backdrop-filter:var(--blur);border:1px solid rgba(204,0,0,.2);border-radius:50px;padding:12px 24px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,.12);font-family:var(--font)}
 .dbtn{padding:8px 20px;background:var(--red);color:white;border:none;border-radius:30px;font-family:var(--font);cursor:pointer;font-size:.9rem}
-#notif{position:fixed;top:85px;right:20px;z-index:5000;padding:14px 20px;background:rgba(255,255,255,.97);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);font-family:var(--font);font-size:.95rem;max-width:320px;animation:slideIn .4s cubic-bezier(0.4,0,0.2,1);transition:box-shadow .2s,transform .2s}#notif:hover{box-shadow:0 12px 40px rgba(0,0,0,.2);transform:translateY(-2px)}
-@keyframes slideIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
+#notif{position:fixed;top:85px;right:20px;z-index:5000;padding:16px 18px;background:rgba(255,255,255,.98);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.08);font-family:var(--font);font-size:.95rem;max-width:300px;width:calc(100vw - 40px);animation:slideIn .35s cubic-bezier(0.34,1.56,0.64,1);border:1px solid rgba(204,0,0,.08)}
 .notif-ok{border-right:4px solid green}.notif-er{border-right:4px solid var(--red)}
 .cfbox{background:white;border-radius:20px;padding:36px 32px;text-align:center;max-width:360px;width:90%;animation:scIn .3s ease}
 @keyframes scIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
@@ -345,16 +344,42 @@ function useScrollAnim() {
 
 // ─── Notification ─────────────────────────────────────────────────────────────
 function Notif({ msg, type, onDone, onCartClick }) {
-  useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, [msg]);
+  useEffect(() => { const t = setTimeout(onDone, 4000); return () => clearTimeout(t); }, [msg]);
   if (!msg) return null;
-  const isCartMsg = msg.includes("کارٹ میں شامل");
+  const isCartMsg = msg.includes("کارٹ میں شامل") || msg.includes("✅");
   return (
-    <div id="notif" className={type === "ok" ? "notif-ok" : "notif-er"}
-      style={{ cursor: isCartMsg ? "pointer" : "default", userSelect: "none" }}
-      onClick={isCartMsg ? () => { onCartClick(); onDone(); } : undefined}
-    >
-      {msg}
-      {isCartMsg && <div style={{ marginTop: 10 }}><button style={{ padding: "7px 18px", background: "var(--red)", color: "white", border: "none", borderRadius: 8, fontFamily: "var(--font)", fontSize: ".85rem", cursor: "pointer", width: "100%" }}>🛒 کارٹ دیکھیں</button></div>}
+    <div id="notif" className={type === "ok" ? "notif-ok" : "notif-er"}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: isCartMsg ? 12 : 0 }}>
+        <span style={{ fontSize: "1.3rem" }}>{type === "ok" ? "✅" : "❌"}</span>
+        <span style={{ fontFamily: "var(--font)", fontSize: "1rem", flex: 1 }}>{msg}</span>
+        <button onClick={onDone} style={{ background: "none", border: "none", cursor: "pointer", color: "#bbb", fontSize: "1rem", padding: "2px 6px", borderRadius: 6, lineHeight: 1 }}>✕</button>
+      </div>
+      {isCartMsg && (
+        <button
+          onClick={() => { onCartClick(); onDone(); }}
+          style={{
+            width: "100%",
+            padding: "10px 0",
+            background: "linear-gradient(135deg, var(--red), #ff4422)",
+            color: "white",
+            border: "none",
+            borderRadius: 10,
+            fontFamily: "var(--font)",
+            fontSize: "1rem",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            boxShadow: "0 4px 14px rgba(204,0,0,.25)",
+            transition: "all .2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+          onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+        >
+          🛒 کارٹ دیکھیں
+        </button>
+      )}
     </div>
   );
 }
@@ -1001,7 +1026,7 @@ export default function App() {
   const handleAddCart = (id) => {
     const p = products.find(x => x.id === id); if (!p) return;
     setCart(c => { const ex = c.find(x => x.id === id); return ex ? c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x) : [...c, { id, name: p.name, category: p.category, price: p.price || null, qty: 1 }]; });
-    notify(`✅ ${p.name} `, "ok");
+    notify(`${p.name} کارٹ میں شامل`, "ok");;
   };
   const handleCartQty = (id, d) => setCart(c => c.map(x => x.id === id ? { ...x, qty: Math.max(1, x.qty + d) } : x));
   const handleCartDelete = (id) => setCart(c => c.filter(x => x.id !== id));
