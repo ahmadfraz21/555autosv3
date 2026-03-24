@@ -62,6 +62,15 @@ const CSS = `
 :root{--red:#cc0000;--rd:#990000;--org:#ff6600;--blk:#111;--font:'Noto Nastaliq Urdu',serif;--blur:blur(16px);--tr:all 0.4s cubic-bezier(0.4,0,0.2,1)}
 *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
 body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text-align:right;overflow-x:hidden}
+.translated-ltr body,.translated-ltr .sec,.translated-ltr .hcon,.translated-ltr .htag,.translated-ltr .hsub,.translated-ltr .bp,.translated-ltr .bg{direction:ltr;text-align:left}
+.translated-ltr .nlinks{direction:ltr}
+.translated-ltr #nb{direction:ltr}
+.translated-ltr .h555{direction:ltr}
+.translated-ltr .fgrd,.translated-ltr .agrid,.translated-ltr .wgrid,.translated-ltr .pgrid,.translated-ltr .cgrid,.translated-ltr .fgrid,.translated-ltr .kgrid{direction:ltr;text-align:left}
+.translated-ltr #cpanel{left:auto;right:0;border-right:none;border-left:1px solid rgba(204,0,0,.15)}
+.translated-ltr .citem,.translated-ltr .cinf{direction:ltr;text-align:left}
+.translated-ltr footer,.translated-ltr .fbot{direction:ltr;text-align:left}
+.translated-ltr .stitle{direction:ltr}
 .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.1;pointer-events:none;z-index:-1;animation:orbF 8s ease-in-out infinite alternate}
 .o1{width:600px;height:600px;background:radial-gradient(circle,#cc0000,transparent);top:-10%;right:-10%}
 .o2{width:400px;height:400px;background:radial-gradient(circle,#ff6600,transparent);bottom:10%;left:-5%;animation-delay:2s}
@@ -251,6 +260,22 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 `;
 
 // ─── Scroll animation hook ────────────────────────────────────────────────────
+function useGoogleTranslateFix() {
+  useEffect(() => {
+    const fix = () => {
+      const isTranslated = document.documentElement.classList.contains('translated-ltr') ||
+        document.body.classList.contains('translated-ltr');
+      if (isTranslated) {
+        document.documentElement.style.direction = 'ltr';
+      }
+    };
+    const obs = new MutationObserver(fix);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+}
+
 function useScrollAnim() {
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -782,6 +807,7 @@ export default function App() {
   const [loginErr, setLoginErr] = useState(false);
 
   useScrollAnim();
+  useGoogleTranslateFix();
 
   useEffect(() => { setTimeout(() => setLoaded(true), 1800); }, []);
   useEffect(() => { ls.set("555p", products); }, [products]);
