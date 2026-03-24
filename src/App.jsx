@@ -229,7 +229,7 @@ body{font-family:var(--font);background:#fff;color:var(--blk);direction:rtl;text
 .cempty{text-align:center;padding:60px 20px;color:#888;font-family:var(--font);font-size:1.1rem}
 #dbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:500;background:rgba(255,255,255,.92);backdrop-filter:var(--blur);border:1px solid rgba(204,0,0,.2);border-radius:50px;padding:12px 24px;display:flex;gap:12px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,.12);font-family:var(--font)}
 .dbtn{padding:8px 20px;background:var(--red);color:white;border:none;border-radius:30px;font-family:var(--font);cursor:pointer;font-size:.9rem}
-#notif{position:fixed;top:85px;right:20px;z-index:5000;padding:14px 20px;background:rgba(255,255,255,.97);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);font-family:var(--font);font-size:.95rem;max-width:300px;animation:slideIn .4s cubic-bezier(0.4,0,0.2,1)}
+#notif{position:fixed;top:85px;right:20px;z-index:5000;padding:14px 20px;background:rgba(255,255,255,.97);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);font-family:var(--font);font-size:.95rem;max-width:320px;animation:slideIn .4s cubic-bezier(0.4,0,0.2,1);transition:box-shadow .2s,transform .2s}#notif:hover{box-shadow:0 12px 40px rgba(0,0,0,.2);transform:translateY(-2px)}
 @keyframes slideIn{from{transform:translateX(200px);opacity:0}to{transform:translateX(0);opacity:1}}
 .notif-ok{border-right:4px solid green}.notif-er{border-right:4px solid var(--red)}
 .cfbox{background:white;border-radius:20px;padding:36px 32px;text-align:center;max-width:360px;width:90%;animation:scIn .3s ease}
@@ -322,10 +322,19 @@ function useScrollAnim() {
 }
 
 // ─── Notification ─────────────────────────────────────────────────────────────
-function Notif({ msg, type, onDone }) {
+function Notif({ msg, type, onDone, onCartClick }) {
   useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, [msg]);
   if (!msg) return null;
-  return <div id="notif" className={type === "ok" ? "notif-ok" : "notif-er"}>{msg}</div>;
+  const isCartMsg = msg.includes("کارٹ میں شامل");
+  return (
+    <div id="notif" className={type === "ok" ? "notif-ok" : "notif-er"}
+      style={{ cursor: isCartMsg ? "pointer" : "default", userSelect: "none" }}
+      onClick={isCartMsg ? () => { onCartClick(); onDone(); } : undefined}
+    >
+      {msg}
+      {isCartMsg && <div style={{ fontSize: ".75rem", color: "#888", marginTop: 4, fontFamily: "var(--font)" }}>کارٹ کھولنے کے لیے یہاں کلک کریں ←</div>}
+    </div>
+  );
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -923,9 +932,9 @@ export default function App() {
     } else { setLoginErr(true); setLoginForm(f => ({ ...f, pass: "" })); }
   };
   const handleLogout = async () => { ls.set("555s", ""); setIsOwner(false); notify("👋 لاگ آؤٹ ہو گئے", "ok"); try { await signOut(auth); } catch {} };
-  const handleSaveProduct = ({ name, category, tags, status, imgUrl, editId }) => {
-    if (editId) { setProducts(p => p.map(x => x.id === editId ? { ...x, name, category, tags, status, ...(imgUrl && { imgUrl }) } : x)); notify(`✅ "${name}" اپڈیٹ ہوا`, "ok"); }
-    else { setProducts(p => [...p, { id: "p_" + Date.now(), name, category, tags, status, ...(imgUrl && { imgUrl }) }]); notify(`✅ "${name}" شامل کر دیا`, "ok"); }
+  const handleSaveProduct = ({ name, category, tags, status, price, imgUrl, editId }) => {
+    if (editId) { setProducts(p => p.map(x => x.id === editId ? { ...x, name, category, tags, status, price, ...(imgUrl && { imgUrl }) } : x)); notify(`✅ "${name}" اپڈیٹ ہوا`, "ok"); }
+    else { setProducts(p => [...p, { id: "p_" + Date.now(), name, category, tags, status, price, ...(imgUrl && { imgUrl }) }]); notify(`✅ "${name}" شامل کر دیا`, "ok"); }
   };
   const handleToggleStatus = (id) => { setProducts(p => p.map(x => x.id === id ? { ...x, status: x.status === "in-stock" ? "sold" : "in-stock" } : x)); notify("✅ حالت تبدیل ہوئی", "ok"); };
   const handleDeleteProduct = (id) => { if (!confirm("حذف کریں؟")) return; setProducts(p => p.filter(x => x.id !== id)); notify("🗑️ پرزہ حذف ہو گیا", "ok"); };
@@ -983,7 +992,7 @@ export default function App() {
         <div id="dbar"><span style={{ fontFamily: "var(--font)" }}>{selected.size} اشیاء منتخب</span><button className="dbtn" onClick={() => setConfirmOpen(true)}>🗑️ سب ہٹائیں</button></div>
       )}
 
-      {notif.msg && <Notif msg={notif.msg} type={notif.type} onDone={() => setNotif({ msg: "", type: "ok" })} />}
+      {notif.msg && <Notif msg={notif.msg} type={notif.type} onDone={() => setNotif({ msg: "", type: "ok" })} onCartClick={() => setCartOpen(true)} />}
       {showTop && <button id="topbtn" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>↑</button>}
       <Lightbox img={lightbox?.img} cap={lightbox?.cap} onClose={() => setLightbox(null)} />
 
