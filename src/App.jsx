@@ -255,6 +255,19 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 .fci{display:flex;gap:10px;align-items:center;margin-bottom:9px;font-family:var(--font);font-size:.85rem;color:rgba(255,255,255,.6)}
 .fbot{max-width:1300px;margin:0 auto;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);text-align:center;font-family:var(--font);font-size:.85rem;color:rgba(255,255,255,.4)}
 .ltr{direction:ltr;unicode-bidi:embed;display:inline-block}
+.srchbar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.85);border:1.5px solid rgba(204,0,0,.18);border-radius:14px;padding:10px 18px;margin-bottom:28px;box-shadow:0 2px 12px rgba(0,0,0,.06);transition:border-color .3s}
+.srchbar:focus-within{border-color:var(--red);box-shadow:0 0 0 3px rgba(204,0,0,.1)}
+.srchbar input{flex:1;border:none;background:transparent;font-family:var(--font);font-size:1rem;direction:rtl;outline:none;color:var(--blk)}
+.srchbar input::placeholder{color:#bbb}
+.srchic{font-size:1.2rem;color:#bbb;flex-shrink:0}
+.srchclear{background:none;border:none;cursor:pointer;color:#bbb;font-size:1rem;padding:2px 6px;border-radius:6px;transition:var(--tr)}.srchclear:hover{color:var(--red);background:rgba(204,0,0,.08)}
+.srch-count{font-family:var(--font);font-size:.85rem;color:#999;text-align:center;margin-bottom:16px}
+.pimg{width:100%;height:160px;object-fit:cover;border-radius:10px;margin-bottom:12px;display:block}
+.pimg-placeholder{width:100%;height:120px;background:linear-gradient(135deg,rgba(204,0,0,.05),rgba(255,102,0,.05));border-radius:10px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;border:1px dashed rgba(204,0,0,.12)}
+.cart-clear{padding:8px 18px;background:rgba(204,0,0,.08);color:var(--red);border:1px solid rgba(204,0,0,.15);border-radius:10px;font-family:var(--font);font-size:.85rem;cursor:pointer;transition:var(--tr);width:100%;margin-bottom:10px}.cart-clear:hover{background:rgba(204,0,0,.15)}
+.no-results{text-align:center;padding:60px 20px;font-family:var(--font);color:#aaa;font-size:1.1rem}
+.no-results .nr-icon{font-size:3rem;margin-bottom:12px}
+
 #lb-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.92);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;cursor:pointer}
 #lb-overlay img{max-width:92vw;max-height:80vh;border-radius:12px}
 `;
@@ -273,6 +286,14 @@ function useGoogleTranslateFix() {
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     return () => obs.disconnect();
+  }, []);
+}
+
+function useEscKey(handlers) {
+  useEffect(() => {
+    const fn = (e) => { if (e.key === 'Escape') handlers.forEach(h => h && h()); };
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
   }, []);
 }
 
@@ -484,18 +505,41 @@ function Categories({ products, activeCat, selected, onCat }) {
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) {
-  const list = activeCat === "سب" ? products : products.filter(p => p.category === activeCat);
+  const [search, setSearch] = useState("");
+  const baselist = activeCat === "سب" ? products : products.filter(p => p.category === activeCat);
+  const list = search.trim()
+    ? baselist.filter(p =>
+        p.name.includes(search) ||
+        p.category.includes(search) ||
+        (p.tags || []).some(t => t.includes(search))
+      )
+    : baselist;
+
   return (
     <div className="sec" id="sprods">
       <h2 className="stitle sa su" id="ptit">{activeCat === "سب" ? "تمام پرزے" : activeCat}</h2>
+      <div className="srchbar">
+        <span className="srchic">🔍</span>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="پرزہ تلاش کریں... (نام، قسم، ٹیگ)"
+        />
+        {search && <button className="srchclear" onClick={() => setSearch("")}>✕</button>}
+      </div>
+      {search && <div className="srch-count">{list.length} نتائج ملے</div>}
       {!list.length
-        ? <div style={{ textAlign: "center", padding: 60, fontFamily: "var(--font)", color: "#aaa", fontSize: "1.2rem" }}>اس قسم میں کوئی پرزہ نہیں</div>
+        ? <div className="no-results"><div className="nr-icon">{search ? "🔍" : "📦"}</div><div>{search ? `"${search}" کے لیے کوئی پرزہ نہیں ملا` : "اس قسم میں کوئی پرزہ نہیں"}</div></div>
         : <div className="pgrid">
           {list.map((p, i) => {
             const isSold = p.status === "sold";
             const isSel = selected.has(p.id);
             return (
               <div key={p.id} className={`pcard sa ss${isSel ? " sel" : ""}${isSold ? " sold-card" : ""}`} style={{ transitionDelay: `${Math.min(i * .06, .6)}s` }}>
+                {p.imgUrl
+                  ? <img src={p.imgUrl} alt={p.name} className="pimg" />
+                  : <div className="pimg-placeholder">🔩</div>
+                }
                 <span className={`pbadge ${isSold ? "bsold" : "bin"}`}>{isSold ? "❌ فروخت شدہ" : "✅ دستیاب"}</span>
                 <div className="pname">{p.name}</div>
                 <span className="ptag0">{p.category}</span>
@@ -593,7 +637,7 @@ function Contact() {
 }
 
 // ─── Cart Panel ───────────────────────────────────────────────────────────────
-function CartPanel({ open, cart, onClose, onQty, onDelete, onWA }) {
+function CartPanel({ open, cart, onClose, onQty, onDelete, onWA, onClear }) {
   const total = cart.reduce((a, c) => a + c.qty, 0);
   return (
     <>
@@ -617,8 +661,13 @@ function CartPanel({ open, cart, onClose, onQty, onDelete, onWA }) {
           }
         </div>
         <div className="cfoot">
-          {cart.length > 0 && <div className="csum">مجموعی: {total} اشیاء</div>}
-          <button className="cwabtn" onClick={onWA}>📱 واٹس ایپ پر دریافت</button>
+          {cart.length > 0 && (
+            <>
+              <div className="csum">مجموعی: {total} اشیاء ({cart.length} قسم)</div>
+              <button className="cart-clear" onClick={onClear}>🗑️ کارٹ خالی کریں</button>
+            </>
+          )}
+          <button className="cwabtn" onClick={onWA} disabled={!cart.length} style={{opacity: cart.length ? 1 : .5, cursor: cart.length ? 'pointer' : 'not-allowed'}}>📱 واٹس ایپ پر دریافت</button>
         </div>
       </div>
     </>
@@ -808,6 +857,7 @@ export default function App() {
 
   useScrollAnim();
   useGoogleTranslateFix();
+  useEscKey([() => setCartOpen(false), () => setLoginOpen(false), () => setLightbox(null)]);
 
   useEffect(() => { setTimeout(() => setLoaded(true), 1800); }, []);
   useEffect(() => { ls.set("555p", products); }, [products]);
@@ -829,8 +879,10 @@ export default function App() {
   const handleCartDelete = (id) => setCart(c => c.filter(x => x.id !== id));
   const handleWA = () => {
     if (!cart.length) return;
-    const items = cart.map(c => `• ${c.name} (تعداد: ${c.qty})`).join("\n");
-    window.open(`https://wa.me/${WA}?text=${encodeURIComponent("السلام علیکم میاں صاحب!\nمجھے درج ذیل پرزوں کے بارے میں جاننا ہے:\n\n" + items + "\n\nبراہ کرم قیمت اور دستیابی بتائیں۔")}`, "_blank");
+    const items = cart.map(c => `• ${c.name} | قسم: ${c.category} | تعداد: ${c.qty}`).join("\n");
+    const total = cart.reduce((a, c) => a + c.qty, 0);
+    const msg = `السلام علیکم میاں صاحب! 🙏\n\nمجھے درج ذیل ${total} پرزوں کی ضرورت ہے:\n\n${items}\n\n━━━━━━━━━━━━\nبراہ کرم قیمت اور دستیابی بتائیں۔\nشکریہ 🚛`;
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, "_blank");
   };
   const handleLogin = async () => {
     if (loginForm.user === OU && loginForm.pass === OP) {
@@ -895,7 +947,7 @@ export default function App() {
         </div>
       )}
 
-      <CartPanel open={cartOpen} cart={cart} onClose={() => setCartOpen(false)} onQty={handleCartQty} onDelete={handleCartDelete} onWA={handleWA} />
+      <CartPanel open={cartOpen} cart={cart} onClose={() => setCartOpen(false)} onQty={handleCartQty} onDelete={handleCartDelete} onWA={handleWA} onClear={() => { setCart([]); notify('🗑️ کارٹ خالی ہو گئی', 'ok'); }} />
       {selected.size > 0 && (
         <div id="dbar"><span style={{ fontFamily: "var(--font)" }}>{selected.size} اشیاء منتخب</span><button className="dbtn" onClick={() => setConfirmOpen(true)}>🗑️ سب ہٹائیں</button></div>
       )}
