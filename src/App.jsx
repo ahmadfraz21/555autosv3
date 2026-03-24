@@ -346,7 +346,7 @@ function useScrollAnim() {
 function Notif({ msg, type, onDone, onCartClick }) {
   useEffect(() => { const t = setTimeout(onDone, 4000); return () => clearTimeout(t); }, [msg]);
   if (!msg) return null;
-  const isCartMsg = msg.includes("کارٹ میں شامل") || msg.includes("✅");
+  const isCartMsg = type === "ok";
   return (
     <div id="notif" className={type === "ok" ? "notif-ok" : "notif-er"}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: isCartMsg ? 12 : 0 }}>
