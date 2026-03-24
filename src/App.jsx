@@ -1026,7 +1026,7 @@ export default function App() {
   const handleAddCart = (id) => {
     const p = products.find(x => x.id === id); if (!p) return;
     setCart(c => { const ex = c.find(x => x.id === id); return ex ? c.map(x => x.id === id ? { ...x, qty: x.qty + 1 } : x) : [...c, { id, name: p.name, category: p.category, price: p.price || null, qty: 1 }]; });
-    notify(`${p.name} کارٹ میں شامل`, "ok");;
+    notify(p.name, "ok");
   };
   const handleCartQty = (id, d) => setCart(c => c.map(x => x.id === id ? { ...x, qty: Math.max(1, x.qty + d) } : x));
   const handleCartDelete = (id) => setCart(c => c.filter(x => x.id !== id));
