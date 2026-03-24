@@ -354,7 +354,7 @@ function Notif({ msg, type, onDone, onCartClick }) {
       onClick={isCartMsg ? () => { onCartClick(); onDone(); } : undefined}
     >
       {msg}
-      {isCartMsg && <div style={{ fontSize: ".75rem", color: "#888", marginTop: 4, fontFamily: "var(--font)" }}>کارٹ کھولنے کے لیے یہاں کلک کریں ←</div>}
+      {isCartMsg && <div style={{ marginTop: 10 }}><button style={{ padding: "7px 18px", background: "var(--red)", color: "white", border: "none", borderRadius: 8, fontFamily: "var(--font)", fontSize: ".85rem", cursor: "pointer", width: "100%" }}>🛒 کارٹ دیکھیں</button></div>}
     </div>
   );
 }
