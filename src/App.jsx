@@ -994,7 +994,7 @@ export default function App() {
     }
     return saved;
   });
-  const [cart, setCart] = useState(() => ls.get("555c", []));
+  const [cart, setCart] = useState([]);
   const [gallery, setGallery] = useState(() => ls.get("555g", []));
   const [selected, setSelected] = useState(new Set());
   const [activeCat, setActiveCat] = useState("سب");
@@ -1014,7 +1014,6 @@ export default function App() {
 
   useEffect(() => { setTimeout(() => setLoaded(true), 1800); }, []);
   useEffect(() => { ls.set("555p", products); }, [products]);
-  useEffect(() => { ls.set("555c", cart); }, [cart]);
   useEffect(() => { ls.set("555g", gallery); }, [gallery]);
   useEffect(() => { const fn = () => setShowTop(window.scrollY > 400); window.addEventListener("scroll", fn); return () => window.removeEventListener("scroll", fn); }, []);
 
