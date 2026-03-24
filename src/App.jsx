@@ -255,6 +255,28 @@ footer{background:rgba(10,0,0,.96);color:white;padding:50px 30px 20px;margin-top
 .fci{display:flex;gap:10px;align-items:center;margin-bottom:9px;font-family:var(--font);font-size:.85rem;color:rgba(255,255,255,.6)}
 .fbot{max-width:1300px;margin:0 auto;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);text-align:center;font-family:var(--font);font-size:.85rem;color:rgba(255,255,255,.4)}
 .ltr{direction:ltr;unicode-bidi:embed;display:inline-block}
+.pdmodal-overlay{position:fixed;inset:0;z-index:4500;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px}
+.pdmodal{background:#fff;border-radius:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative;animation:scIn .3s cubic-bezier(0.4,0,0.2,1);box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.pdmodal-img{width:100%;height:240px;object-fit:cover;border-radius:24px 24px 0 0;display:block}
+.pdmodal-imgph{width:100%;height:200px;background:linear-gradient(135deg,rgba(204,0,0,.08),rgba(255,102,0,.08));border-radius:24px 24px 0 0;display:flex;align-items:center;justify-content:center;font-size:5rem}
+.pdmodal-body{padding:28px}
+.pdmodal-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border:none;background:rgba(0,0,0,.4);color:white;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:var(--tr)}.pdmodal-close:hover{background:var(--red)}
+.pdmodal-badge{display:inline-flex;padding:5px 14px;border-radius:20px;font-size:.8rem;font-family:var(--font);font-weight:600;margin-bottom:14px}
+.pdmodal-name{font-family:var(--font);font-size:1.5rem;font-weight:700;color:var(--blk);margin-bottom:8px;line-height:1.5}
+.pdmodal-price{font-family:'Arial Black',sans-serif;font-size:1.8rem;font-weight:900;color:var(--red);direction:ltr;display:inline-block;margin-bottom:16px}
+.pdmodal-price-na{font-family:var(--font);font-size:1rem;color:#bbb;margin-bottom:16px}
+.pdmodal-divider{height:1px;background:rgba(204,0,0,.08);margin:16px 0}
+.pdmodal-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pdmodal-ic{width:36px;height:36px;background:linear-gradient(135deg,rgba(204,0,0,.1),rgba(255,102,0,.1));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.pdmodal-lbl{font-family:var(--font);font-size:.82rem;color:#999}
+.pdmodal-val{font-family:var(--font);font-size:.95rem;color:var(--blk);font-weight:600}
+.pdmodal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.pdmodal-tag{padding:4px 12px;background:rgba(255,102,0,.08);border-radius:20px;font-size:.8rem;color:var(--org);font-family:var(--font)}
+.pdmodal-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.pdmodal-addcart{flex:1;padding:14px;background:var(--red);color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1rem;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px}.pdmodal-addcart:hover{background:var(--rd);transform:translateY(-2px)}.pdmodal-addcart:disabled{background:#ccc;cursor:not-allowed;transform:none}
+.pdmodal-wa{flex:1;padding:14px;background:#25d366;color:white;border:none;border-radius:12px;font-family:var(--font);font-size:1rem;cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}.pdmodal-wa:hover{background:#128c7e;transform:translateY(-2px)}
+.pcard{cursor:pointer}
+
 .pprice{font-family:'Arial Black',sans-serif;font-size:1.1rem;color:var(--red);font-weight:900;direction:ltr;display:inline-block;margin-bottom:10px}
 .pprice-na{font-family:var(--font);font-size:.85rem;color:#bbb;margin-bottom:10px}
 .cart-subtotal{background:rgba(204,0,0,.05);border:1px solid rgba(204,0,0,.1);border-radius:12px;padding:14px 16px;margin-bottom:12px}
@@ -522,9 +544,67 @@ function Categories({ products, activeCat, selected, onCat }) {
   );
 }
 
+// ─── Product Detail Modal ─────────────────────────────────────────────────────
+function ProductModal({ product, onClose, onAddCart }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+  if (!product) return null;
+  const isSold = product.status === "sold";
+  const waMsg = encodeURIComponent(`السلام علیکم میاں صاحب! 🙏\n\nمجھے یہ پرزہ چاہیے:\n• ${product.name}\n• قسم: ${product.category}${product.price ? `\n• قیمت: Rs. ${product.price.toLocaleString()}` : ""}\n\nبراہ کرم دستیابی بتائیں۔`);
+  return (
+    <div className="pdmodal-overlay" onClick={onClose}>
+      <div className="pdmodal" onClick={e => e.stopPropagation()}>
+        <button className="pdmodal-close" onClick={onClose}>✕</button>
+        {product.imgUrl
+          ? <img src={product.imgUrl} alt={product.name} className="pdmodal-img" />
+          : <div className="pdmodal-imgph">🔩</div>
+        }
+        <div className="pdmodal-body">
+          <span className={`pdmodal-badge ${isSold ? "bsold" : "bin"}`}>{isSold ? "❌ فروخت شدہ" : "✅ دستیاب"}</span>
+          <div className="pdmodal-name">{product.name}</div>
+          {product.price
+            ? <div className="pdmodal-price">Rs. {product.price.toLocaleString()}</div>
+            : <div className="pdmodal-price-na">قیمت دریافت کریں</div>
+          }
+          <div className="pdmodal-divider" />
+          <div className="pdmodal-row">
+            <div className="pdmodal-ic">📦</div>
+            <div><div className="pdmodal-lbl">قسم</div><div className="pdmodal-val">{product.category}</div></div>
+          </div>
+          {product.tags?.length > 0 && (
+            <div className="pdmodal-row">
+              <div className="pdmodal-ic">🏷️</div>
+              <div>
+                <div className="pdmodal-lbl">ٹیگز</div>
+                <div className="pdmodal-tags">{product.tags.map((t, i) => <span key={i} className="pdmodal-tag">{t}</span>)}</div>
+              </div>
+            </div>
+          )}
+          <div className="pdmodal-row">
+            <div className="pdmodal-ic">🔢</div>
+            <div><div className="pdmodal-lbl">پرزہ نمبر</div><div className="pdmodal-val" style={{direction:"ltr",fontFamily:"Arial,sans-serif"}}>{product.id.toUpperCase()}</div></div>
+          </div>
+          <div className="pdmodal-divider" />
+          <div className="pdmodal-actions">
+            <button className="pdmodal-addcart" disabled={isSold} onClick={() => { onAddCart(product.id); onClose(); }}>
+              {isSold ? "فروخت شدہ" : "🛒 کارٹ میں شامل کریں"}
+            </button>
+            <a href={`https://wa.me/923001974040?text=${waMsg}`} target="_blank" rel="noreferrer" className="pdmodal-wa">
+              💬 واٹس ایپ
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Products ─────────────────────────────────────────────────────────────────
 function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) {
   const [search, setSearch] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const baselist = activeCat === "سب" ? products : products.filter(p => p.category === activeCat);
   const list = search.trim()
     ? baselist.filter(p =>
@@ -547,6 +627,7 @@ function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) 
         {search && <button className="srchclear" onClick={() => setSearch("")}>✕</button>}
       </div>
       {search && <div className="srch-count">{list.length} نتائج ملے</div>}
+      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddCart={onAddCart} />}
       {!list.length
         ? <div className="no-results"><div className="nr-icon">{search ? "🔍" : "📦"}</div><div>{search ? `"${search}" کے لیے کوئی پرزہ نہیں ملا` : "اس قسم میں کوئی پرزہ نہیں"}</div></div>
         : <div className="pgrid">
@@ -554,7 +635,7 @@ function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) 
             const isSold = p.status === "sold";
             const isSel = selected.has(p.id);
             return (
-              <div key={p.id} className={`pcard sa ss${isSel ? " sel" : ""}${isSold ? " sold-card" : ""}`} style={{ transitionDelay: `${Math.min(i * .06, .6)}s` }}>
+              <div key={p.id} className={`pcard sa ss${isSel ? " sel" : ""}${isSold ? " sold-card" : ""}`} style={{ transitionDelay: `${Math.min(i * .06, .6)}s` }} onClick={() => setSelectedProduct(p)}>
                 {p.imgUrl
                   ? <img src={p.imgUrl} alt={p.name} className="pimg" />
                   : <div className="pimg-placeholder">🔩</div>
@@ -565,11 +646,11 @@ function Products({ products, activeCat, selected, onToggleSelect, onAddCart }) 
                 {p.price ? <div className="pprice">Rs. {p.price.toLocaleString()}</div> : <div className="pprice-na">قیمت دریافت کریں</div>}
                 {p.tags?.length > 0 && <div className="ptags">{p.tags.map((t, ti) => <span key={ti} className="ptag">{t}</span>)}</div>}
                 <div className="prow">
-                  <label className="chkw" onClick={() => onToggleSelect(p.id)}>
+                  <label className="chkw" onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
                     <div className={`chkb${isSel ? " checked" : ""}`}>{isSel && <span style={{ color: "white", fontSize: 12 }}>✓</span>}</div>
                     <span style={{ fontFamily: "var(--font)", fontSize: ".85rem", color: "#777" }}>منتخب</span>
                   </label>
-                  <button className="ac2" onClick={() => onAddCart(p.id)} disabled={isSold}>{isSold ? "ناقابل" : "🛒 کارٹ"}</button>
+                  <button className="ac2" onClick={e => { e.stopPropagation(); onAddCart(p.id); }} disabled={isSold}>{isSold ? "ناقابل" : "🛒 کارٹ"}</button>
                 </div>
               </div>
             );
@@ -879,7 +960,15 @@ function Footer({ onCat }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [loaded, setLoaded] = useState(false);
-  const [products, setProducts] = useState(() => ls.get("555p", [...DEMO_PRODUCTS]));
+  const [products, setProducts] = useState(() => {
+    const saved = ls.get("555p", null);
+    // If saved products exist but have no prices, reset to demo products with prices
+    if (!saved || !saved.length || !saved.some(p => p.price)) {
+      ls.set("555p", [...DEMO_PRODUCTS]);
+      return [...DEMO_PRODUCTS];
+    }
+    return saved;
+  });
   const [cart, setCart] = useState(() => ls.get("555c", []));
   const [gallery, setGallery] = useState(() => ls.get("555g", []));
   const [selected, setSelected] = useState(new Set());
